@@ -1,0 +1,22 @@
+name: 'Line Length Check'
+
+on:
+  pull_request:
+    paths:
+      - '**.tcl'
+
+jobs:
+  line-length-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependencies
+        run: |
+          sudo apt-get update && sudo apt-get -y install tclsh tcllib tdom tclcurl libpgtcl
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Check Line Length
+        run: |
+          cd scripts
+          tclsh line-length-check.tcl "*.tcl"
