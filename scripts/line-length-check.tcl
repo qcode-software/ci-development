@@ -1,8 +1,11 @@
-source "../tcl/linter.tcl"
 
-set files [lindex $argv 0]
+
+set repository [lindex $argv 0]
+set files [lindex $argv 1]
 set long_lines [list]
 puts "Files: $files"
+
+source "${repository}/tcl/linter.tcl"
 
 foreach file $files {
     set lines [linter_report_lines_over_length $file 90]
@@ -16,4 +19,3 @@ foreach file $files {
 if { [llength $long_lines] > 0 } {
     exit 1
 }
-

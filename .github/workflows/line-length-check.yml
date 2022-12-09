@@ -22,10 +22,11 @@ jobs:
         with:
           files: |
             scripts/**.tcl
+            tcl/**.tcl
 
       - name: Check Line Length
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Checking files: ${{ steps.changed-files.outputs.all_changed_files }}"
           cd scripts
-          tclsh line-length-check.tcl ${{ steps.changed-files.outputs.all_changed_files }}
+          tclsh line-length-check.tcl ${{ github.workspace }} ${{ steps.changed-files.outputs.all_changed_files }}
