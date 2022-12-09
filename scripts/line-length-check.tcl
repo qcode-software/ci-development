@@ -8,7 +8,7 @@ puts "Files: $files"
 source "${repository}/tcl/linter.tcl"
 
 foreach file $files {
-    set lines [linter_report_lines_over_length $file 90]
+    set lines [linter_report_lines_over_length "${repository}/${file}" 90]
     lappend long_lines {*}$lines
 
     foreach line $lines {
