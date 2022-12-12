@@ -1,7 +1,7 @@
 
 
 set repository [lindex $argv 0]
-set files [lindex $argv 1]
+set files [lindex $argv 1 end]
 set long_lines [list]
 puts "Files: $files"
 
