@@ -2,8 +2,6 @@ set repository [lindex $argv 0]
 set files [lrange $argv 1 end]
 set long_lines [list]
 
-puts "Files: $files"
-
 source "${repository}/tcl/linter.tcl"
 
 foreach file $files {
