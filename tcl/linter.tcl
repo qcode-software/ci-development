@@ -26,3 +26,30 @@ proc linter_report_lines_over_length {
         }
     }
 }
+
+proc linter_report_procs_without_filename_prefix {file} {
+    try {
+        set handle [open $file r]
+        set contents [read $handle]
+        set line_no 1
+        set filename [file tail $file]
+        set length [string length [file extension $file]]
+        set prefix [string range $filename 0 end-$length]
+
+        foreach line [split $contents "\n"] {
+            if { [regexp {^\s*proc\s(.+)\s+\{} $line -> proc_name]
+                 && ![string match "${prefix}*" $proc_name] } {
+                puts "$filename :: Line $line_no :: $proc_name"
+                set incorrect_names true
+            }
+
+            incr line_no
+        }
+    } on error [list message options] {
+        error $message [dict get $options -errorinfo] [dict get $options -errorcode]
+    } finally {
+        if { [info exists handle] } {
+            close $handle
+        }
+    }
+}

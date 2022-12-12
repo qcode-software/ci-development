@@ -16,7 +16,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Get Changed Tcl Script Files
+        id: changed-files
+        uses: tj-actions/changed-files@v34
+        with:
+          files: |
+            scripts/**.tcl
+            tcl/**.tcl
+
       - name: Check Line Length
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
+          echo "Checking files: ${{ steps.changed-files.outputs.all_changed_files }}"
           cd scripts
-          tclsh proc-name-check.tcl "*.tcl"
+          tclsh proc-name-check.tcl ${{ github.workspace }} ${{ steps.changed-files.outputs.all_changed_files }}
