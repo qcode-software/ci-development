@@ -1,8 +1,8 @@
-
-
 set repository [lindex $argv 0]
 set files [lindex $argv 1 end]
 set long_lines [list]
+
+puts "Argv: $argv"
 puts "Files: $files"
 
 source "${repository}/tcl/linter.tcl"
