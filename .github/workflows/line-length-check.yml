@@ -5,18 +5,36 @@ on:
     paths:
       - '**.tcl'
 
+env:
+  MAX_LINE_LENGTH: 90
+
 jobs:
   line-length-check:
     runs-on: ubuntu-latest
     steps:
       - name: Dependencies
         run: |
-          sudo apt-get update && sudo apt-get -y install tclsh tcllib tdom tclcurl libpgtcl
+          sudo apt-get update
+          sudo apt-get -y install tclsh tcllib tdom tclcurl libpgtcl
 
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Get Changed Tcl Script Files
+        id: changed-files
+        uses: tj-actions/changed-files@v34
+        with:
+          files: |
+            scripts/**.tcl
+            tcl/**.tcl
+
       - name: Check Line Length
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
+          echo "Checking line length is under $MAX_LINE_LENGTH chars in files: \
+            ${{ steps.changed-files.outputs.all_changed_files }}"
           cd scripts
-          tclsh line-length-check.tcl "*.tcl"
+          tclsh line-length-check.tcl \
+            $MAX_LINE_LENGTH \
+            ${{ github.workspace }} \
+            ${{ steps.changed-files.outputs.all_changed_files }}

@@ -1,22 +1,21 @@
-set long_lines false
+set max_line_length [lindex $argv 0]
+set repository [lindex $argv 1]
+set files [lrange $argv 2 end]
+set long_lines [list]
 
-foreach filename [glob [lindex $argv 0]] {
-    set handle [open $filename r]
-    set contents [read $handle]
-    set line_no 1
+source "${repository}/tcl/linter.tcl"
 
-    foreach line [split $contents "\n"] {
-        if { [string length $line] > 90 } {
-            puts "[file tail $filename] :: line $line_no"
-            set long_lines true
-        }
+foreach file $files {
+    set lines [linter_report_lines_over_length \
+                   "${repository}/${file}" \
+                   $max_line_length]
+    lappend long_lines {*}$lines
 
-        incr line_no
+    foreach line $lines {
+        puts $line
     }
-
-    close $handle
 }
 
-if { $long_lines } {
+if { [llength $long_lines] > 0 } {
     exit 1
 }
