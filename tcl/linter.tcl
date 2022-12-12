@@ -3,7 +3,6 @@ proc linter_report_lines_over_length {
     max_line_length
 } {
     try {
-        set test "This is a really long line that exceeds 90 characters to test the GitHub line length action."
         set handle [open $file r]
         set contents [read $handle]
         set report [list]
