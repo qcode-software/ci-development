@@ -40,16 +40,18 @@ proc linter_report_procs_without_filename_prefix {file} {
         set filename [file tail $file]
         set length [string length [file extension $file]]
         set prefix [string range $filename 0 end-$length]
+        set report [list]
 
         foreach line [split $contents "\n"] {
             if { [regexp {^\s*proc\s(.+)\s+\{} $line -> proc_name]
                  && ![string match "${prefix}*" $proc_name] } {
-                puts "$filename :: Line $line_no :: $proc_name"
-                set incorrect_names true
+                lappend report "$filename :: Line $line_no :: $proc_name"
             }
 
             incr line_no
         }
+
+        return $report
     } on error [list message options] {
         error $message [dict get $options -errorinfo] [dict get $options -errorcode]
     } finally {

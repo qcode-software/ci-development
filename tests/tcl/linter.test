@@ -10,7 +10,7 @@ foreach file $files {
 }
 
 set setup {
-    set test_file "~/ci-development/tests/tcl/files/linter-test.tcl"
+    set test_file "~/ci-development/tests/tcl/files/linter_test.tcl"
 }
 
 test linter_report_lines_over_length-1.0 \
@@ -20,6 +20,16 @@ test linter_report_lines_over_length-1.0 \
         set lines [linter_report_lines_over_length $test_file 90]
 
         return [llength $lines]
+    } \
+    -result 2
+
+test linter_report_procs_without_filename_prefix-1.0 \
+    {Test proc names not prefixed with the file name are reported.} \
+    -setup $setup \
+    -body {
+        set procs [linter_report_procs_without_filename_prefix $test_file]
+
+        return [llength $procs]
     } \
     -result 2
 

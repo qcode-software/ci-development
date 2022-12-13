@@ -11,7 +11,8 @@ jobs:
     steps:
       - name: Dependencies
         run: |
-          sudo apt-get update && sudo apt-get -y install tclsh tcllib tdom tclcurl libpgtcl
+          sudo apt-get update
+          sudo apt-get -y install tclsh tcllib tdom tclcurl libpgtcl
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -27,6 +28,9 @@ jobs:
       - name: Check Line Length
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          echo "Checking files: ${{ steps.changed-files.outputs.all_changed_files }}"
+          echo "Checking proc name prefixes in files: \
+            ${{ steps.changed-files.outputs.all_changed_files }}"
           cd scripts
-          tclsh proc-name-check.tcl ${{ github.workspace }} ${{ steps.changed-files.outputs.all_changed_files }}
+          tclsh proc-name-check.tcl \
+            ${{ github.workspace }} \
+            ${{ steps.changed-files.outputs.all_changed_files }}
