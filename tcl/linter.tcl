@@ -9,9 +9,14 @@ proc linter_report_lines_over_length {
         set line_no 1
 
         foreach line [split $contents "\n"] {
-            if { [string length $line] > $max_line_length } {
+            set line_length [string length $line]
+            if { $line_length > $max_line_length } {
                 set partial_line [string range [string trimleft $line] 0 15]
-                lappend report "[file tail $file] :: line $line_no :: ${partial_line}..."
+                
+                set details "[file tail $file] :: line $line_no :: "
+                append details "length: $line_length chars :: ${partial_line}..."
+
+                lappend report $details
             }
 
             incr line_no
