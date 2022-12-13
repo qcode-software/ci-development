@@ -36,19 +36,17 @@ proc linter_report_procs_without_filename_prefix {file} {
     try {
         set handle [open $file r]
         set contents [read $handle]
-        set line_no 1
         set filename [file tail $file]
         set length [string length [file extension $file]]
         set prefix [string range $filename 0 end-$length]
         set report [list]
 
-        foreach line [split $contents "\n"] {
-            if { [regexp {^\s*proc\s(.+)\s+\{} $line -> proc_name]
-                 && ![string match "${prefix}*" $proc_name] } {
-                lappend report "$filename :: Line $line_no :: $proc_name"
-            }
+        set proc_names [linter_proc_names_parse $contents]
 
-            incr line_no
+        foreach proc_name $proc_names {
+            if { ![string match "${prefix}*" $proc_name] } {
+                lappend report "$filename :: $proc_name"
+            }
         }
 
         return $report
@@ -59,4 +57,18 @@ proc linter_report_procs_without_filename_prefix {file} {
             close $handle
         }
     }
+}
+
+proc linter_proc_names_parse {string} {
+    #| Parse any proc names from the given string without their namespaces.
+
+    set pattern {^\s*proc\s+:{0,2}(?:[a-z0-9_-]+::)*([a-z0-9_-]+)\s+\{}
+    set matches [regexp -lineanchor -all -inline -- $pattern $string]
+    set proc_names [list]
+
+    foreach {match_string proc_name} $matches {
+        lappend proc_names $proc_name
+    }
+
+    return $proc_names
 }
