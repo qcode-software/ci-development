@@ -10,7 +10,7 @@ foreach file $files {
 }
 
 set setup {
-    set test_file "~/ci-development/tests/tcl/files/linter-test.tcl"
+    set test_file "~/ci-development/tests/tcl/files/linter_test.tcl"
 }
 
 test linter_report_lines_over_length-1.0 \
@@ -22,5 +22,46 @@ test linter_report_lines_over_length-1.0 \
         return [llength $lines]
     } \
     -result 2
+
+test linter_report_procs_without_filename_prefix-1.0 \
+    {Test proc names not prefixed with the file name are reported.} \
+    -setup $setup \
+    -body {
+        set procs [linter_report_procs_without_filename_prefix $test_file]
+
+        return [llength $procs]
+    } \
+    -result 2
+
+test linter_proc_names_parse-1.0 \
+    {Test that proc names are parsed from a string.} \
+    -body {
+        set proc_names [linter_proc_names_parse {
+            proc proc_names_test_1 {args} {
+                return "Hello World"
+            }
+
+            proc ::proc_names_test_2 {arg1 arg2} {
+                return "Hello World"
+            }
+
+            proc testing::proc_names_test_3 {} {
+                return "Hello World"
+            }
+
+            proc testing::names::proc_names_test_4 {} {
+                return "Hello World"
+            }
+        }]
+
+        return [expr {
+                      [llength $proc_names] == 4
+                      && "proc_names_test_1" in $proc_names
+                      && "proc_names_test_2" in $proc_names
+                      && "proc_names_test_3" in $proc_names
+                      && "proc_names_test_4" in $proc_names
+                  }]
+    } \
+    -result 1
 
 cleanupTests
