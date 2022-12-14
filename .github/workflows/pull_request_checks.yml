@@ -1,0 +1,16 @@
+name: 'Pull Request Linting'
+
+on:
+  pull_request:
+    paths:
+      - '**.tcl'
+
+jobs:
+  linting:
+    name: Check Line Lengths and Proc Names in Changed Files
+    uses: ./.github/workflows/qcode-ci.yml
+    with:
+      max_line_length: 90
+      check_line_lengths: true
+      check_proc_names: true
+    secrets: inherit

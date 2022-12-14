@@ -1,9 +1,6 @@
 name: 'Proc Name Check'
 
-on:
-  pull_request:
-    paths:
-      - '**.tcl'
+on: workflow_call
 
 jobs:
   proc-name-check:
@@ -25,7 +22,7 @@ jobs:
             scripts/**.tcl
             tcl/**.tcl
 
-      - name: Check Line Length
+      - name: Check Proc Names
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Checking proc name prefixes in files: \
