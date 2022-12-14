@@ -2,6 +2,8 @@ proc linter_report_lines_over_length {
     file
     max_line_length
 } {
+    #| Report lines in the file that have more chars than max line length.
+
     try {
         set handle [open $file r]
         set contents [read $handle]
@@ -33,6 +35,8 @@ proc linter_report_lines_over_length {
 }
 
 proc linter_report_procs_without_filename_prefix {file} {
+    #| Report proc names that are not prefixed with the file name.
+
     try {
         set handle [open $file r]
         set contents [read $handle]
