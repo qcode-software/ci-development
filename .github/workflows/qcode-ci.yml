@@ -21,8 +21,8 @@ on:
 
 jobs:
   line_length_check:
-    name: Check for Lines Exceeding ${{ inputs.max_line_length }} Chars
-    if: inputs.check_line_lengths == 'true'
+    name: Check for Lines Exceeding Max Chars
+    if: inputs.check_line_lengths
     uses: ./.github/workflows/line-length-check.yml
     with:
       max_line_length: ${{ inputs.max_line_length }}
@@ -30,6 +30,6 @@ jobs:
 
   proc_name_check:
     name: Check for Proc Names Not Prefixed with File Name
-    if: inputs.check_proc_names == 'true'
+    if: inputs.check_proc_names
     uses: ./.github/workflows/proc-name-check.yml
     secrets: inherit
