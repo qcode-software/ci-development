@@ -13,3 +13,4 @@ jobs:
       max_line_length: 90
       check_line_lengths: true
       check_proc_names: true
+    secrets: inherit
