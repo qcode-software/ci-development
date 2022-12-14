@@ -1,9 +1,6 @@
 name: 'Proc Name Check'
 
-on:
-  pull_request:
-    paths:
-      - '**.tcl'
+on: workflow_call
 
 jobs:
   proc-name-check:

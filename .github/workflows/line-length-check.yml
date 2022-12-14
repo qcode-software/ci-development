@@ -1,12 +1,13 @@
 name: 'Line Length Check'
 
 on:
-  pull_request:
-    paths:
-      - '**.tcl'
-
-env:
-  MAX_LINE_LENGTH: 90
+  workflow_call:
+    inputs:
+      max_line_length:
+        description: 'The maximum number of characters that a line can be.'
+        default: 90
+        required: false
+        type: number
 
 jobs:
   line-length-check:
@@ -31,10 +32,10 @@ jobs:
       - name: Check Line Length
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          echo "Checking line length is under $MAX_LINE_LENGTH chars in files: \
-            ${{ steps.changed-files.outputs.all_changed_files }}"
+          echo "Checking line length is under ${{ inputs.max_line_length }} chars \
+          in files: ${{ steps.changed-files.outputs.all_changed_files }}"
           cd scripts
           tclsh line-length-check.tcl \
-            $MAX_LINE_LENGTH \
+            ${{ inputs.max_line_length }} \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}

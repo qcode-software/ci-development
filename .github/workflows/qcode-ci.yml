@@ -1,0 +1,35 @@
+name: 'Qcode CI'
+
+on:
+  workflow_call:
+    inputs:
+      max_line_length:
+        description: 'The maximum number of characters that a line can be.'
+        default: 90
+        required: false
+        type: number
+      check_line_lengths:
+        description: 'Flag for checking line lengths.'
+        default: true
+        required: false
+        type: boolean
+      check_proc_names:
+        description: 'Flag for checking that proc names are prefixed with the file name.'
+        default: true
+        required: false
+        type: boolean
+
+jobs:
+  line_length_check:
+    name: Check for Lines Exceeding ${{ inputs.max_line_length }} Chars
+    if: inputs.check_line_lengths == 'true'
+    uses: ./.github/workflows/line-length-check.yml
+    with:
+      max_line_length: ${{ inputs.max_line_length }}
+    secrets: inherit
+
+  proc_name_check:
+    name: Check for Proc Names Not Prefixed with File Name
+    if: inputs.check_proc_names == 'true'
+    uses: ./.github/workflows/proc-name-check.yml
+    secrets: inherit
