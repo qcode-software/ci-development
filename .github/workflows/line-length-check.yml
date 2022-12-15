@@ -38,7 +38,7 @@ jobs:
         run: |
           echo "Checking line length is under ${{ inputs.max_line_length }} chars \
           in files: ${{ steps.changed-files.outputs.all_changed_files }}"
-          cd scripts
+          cd ${{ github.workspace }}/ci-development/scripts
           tclsh line-length-check.tcl \
             ${{ inputs.max_line_length }} \
             ${{ github.workspace }} \
