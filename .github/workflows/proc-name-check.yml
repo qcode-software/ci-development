@@ -1,6 +1,12 @@
 name: 'Proc Name Check'
 
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      files:
+        description: 'List of files to check for changes.'
+        required: true
+        type: string
 
 jobs:
   proc-name-check:
@@ -13,21 +19,21 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Get Changed Tcl Script Files
         id: changed-files
         uses: tj-actions/changed-files@v34
         with:
-          files: |
-            scripts/**.tcl
-            tcl/**.tcl
+          files: ${{ inputs.files }}
 
       - name: Check Proc Names
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Checking proc name prefixes in files: \
             ${{ steps.changed-files.outputs.all_changed_files }}"
-          cd scripts
+          cd ~/ci-development/scripts
           tclsh proc-name-check.tcl \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}

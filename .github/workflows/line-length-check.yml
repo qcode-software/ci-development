@@ -8,6 +8,10 @@ on:
         default: 90
         required: false
         type: number
+      files:
+        description: 'List of files to check for changes.'
+        required: true
+        type: string
 
 jobs:
   line-length-check:
@@ -20,21 +24,21 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Get Changed Tcl Script Files
         id: changed-files
         uses: tj-actions/changed-files@v34
         with:
-          files: |
-            scripts/**.tcl
-            tcl/**.tcl
+          files: ${{ inputs.files }}
 
       - name: Check Line Length
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Checking line length is under ${{ inputs.max_line_length }} chars \
           in files: ${{ steps.changed-files.outputs.all_changed_files }}"
-          cd scripts
+          cd ~/ci-development/scripts
           tclsh line-length-check.tcl \
             ${{ inputs.max_line_length }} \
             ${{ github.workspace }} \
