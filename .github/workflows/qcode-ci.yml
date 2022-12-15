@@ -18,6 +18,10 @@ on:
         default: true
         required: false
         type: boolean
+      files:
+        description: 'List of files to check for changes.'
+        required: true
+        type: string
 
 jobs:
   line_length_check:
@@ -26,10 +30,13 @@ jobs:
     uses: ./.github/workflows/line-length-check.yml
     with:
       max_line_length: ${{ inputs.max_line_length }}
+      files: ${{ inputs.files }}
     secrets: inherit
 
   proc_name_check:
     name: Check for Proc Names Not Prefixed with File Name
     if: inputs.check_proc_names
     uses: ./.github/workflows/proc-name-check.yml
+    with:
+      files: ${{ inputs.files }}
     secrets: inherit

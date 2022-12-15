@@ -8,6 +8,10 @@ on:
         default: 90
         required: false
         type: number
+      files:
+        description: 'List of files to check for changes.'
+        required: true
+        type: string
 
 jobs:
   line-length-check:
@@ -27,9 +31,7 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v34
         with:
-          files: |
-            scripts/**.tcl
-            tcl/**.tcl
+          files: ${{ inputs.files }}
 
       - name: Check Line Length
         if: steps.changed-files.outputs.any_changed == 'true'

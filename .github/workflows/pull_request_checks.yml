@@ -10,6 +10,9 @@ jobs:
     name: Check Line Lengths and Proc Names in Changed Files
     uses: ./.github/workflows/qcode-ci.yml
     with:
+      files: |
+        scripts/**.tcl
+        tcl/**.tcl
       max_line_length: 90
       check_line_lengths: true
       check_proc_names: true
