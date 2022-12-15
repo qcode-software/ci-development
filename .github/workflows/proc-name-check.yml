@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "Checking proc name prefixes in files: \
             ${{ steps.changed-files.outputs.all_changed_files }}"
-          cd ${{ github.workspace }}/ci-development/scripts
+          cd ~/ci-development/scripts
           tclsh proc-name-check.tcl \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
