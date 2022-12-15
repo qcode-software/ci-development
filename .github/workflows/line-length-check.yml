@@ -27,6 +27,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout Qcode CI
+        uses: actions/checkout@v3
+        with:
+          repository: qcode-software/ci-development
+          path: qcode-ci
+
       - name: Get Changed Tcl Script Files
         id: changed-files
         uses: tj-actions/changed-files@v34
@@ -38,7 +44,7 @@ jobs:
         run: |
           echo "Checking line length is under ${{ inputs.max_line_length }} chars \
           in files: ${{ steps.changed-files.outputs.all_changed_files }}"
-          cd ~/ci-development/scripts
+          cd ${{ github.workspace }}/qcode-ci/scripts
           tclsh line-length-check.tcl \
             ${{ inputs.max_line_length }} \
             ${{ github.workspace }} \
