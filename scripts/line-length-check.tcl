@@ -1,9 +1,10 @@
-set max_line_length [lindex $argv 0]
-set repository [lindex $argv 1]
-set files [lrange $argv 2 end]
+set linter [lindex $argv 0]
+set max_line_length [lindex $argv 1]
+set repository [lindex $argv 2]
+set files [lrange $argv 3 end]
 set long_lines [list]
 
-source "${repository}/tcl/linter.tcl"
+source $linter
 
 foreach file $files {
     set lines [linter_report_lines_over_length \

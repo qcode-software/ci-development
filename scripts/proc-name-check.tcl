@@ -1,8 +1,9 @@
-set repository [lindex $argv 0]
-set files [lrange $argv 1 end]
+set linter [lindex $argv 0]
+set repository [lindex $argv 1]
+set files [lrange $argv 2 end]
 set reported_procs [list]
 
-source "${repository}/tcl/linter.tcl"
+source $linter
 
 foreach file $files {
     set lines [linter_report_procs_without_filename_prefix \
