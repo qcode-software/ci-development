@@ -46,7 +46,7 @@ jobs:
           in files: ${{ steps.changed-files.outputs.all_changed_files }}"
           cd ${{ github.workspace }}/qcode-ci/scripts
           tclsh line-length-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl
+            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ inputs.max_line_length }} \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
