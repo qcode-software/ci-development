@@ -28,7 +28,7 @@ dict for {filename procs_tests} $map {
 
         if { [dict size $tests] == 0 } {
             set procs_missing_tests true
-            puts "$filename :: $proc_name"
+            puts "Missing unit test: $filename :: $proc_name"
         }
     }
 }
