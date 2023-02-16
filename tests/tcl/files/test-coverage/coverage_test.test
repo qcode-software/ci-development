@@ -1,0 +1,33 @@
+package require tcltest
+namespace import ::tcltest::test
+namespace import ::tcltest::cleanupTests
+namespace import ::tcltest::testConstraint
+
+set files [lsort [glob -nocomplain "~/test-coverage/tcl/*.tcl"]]
+
+foreach file $files {
+    source $file
+}
+
+set setup {
+    set tcl_file "~/test-coverage/test/files/coverage_test.tcl"
+    set test_file "~/test-coverage/test/files/coverage_test.test"
+}
+
+test test_1-1.0 \
+    {Test 1} \
+    -setup $setup \
+    -body { return true } \
+    -result true
+
+test test_2-1.0 \
+    {Test 1} \
+    -setup $setup \
+    -body { return true } \
+    -result true
+
+test test_3-1.0 \
+    {Test 1} \
+    -setup $setup \
+    -body { return true } \
+    -result true
