@@ -18,7 +18,7 @@ on:
         default: true
         required: false
         type: boolean
-      check_proc_test_coverage:
+      check_procs_have_unit_tests:
         description: 'Flag for checking that procs have unit tests.'
         default: true
         required: false
@@ -29,7 +29,7 @@ on:
         type: string
       test_directory:
         description: 'Directory within the repository where test files are located.'
-        default: 'test'
+        default: test
         required: false
         type: string
 
@@ -51,10 +51,10 @@ jobs:
       files: ${{ inputs.files }}
     secrets: inherit
 
-  proc_test_coverage_check:
-    name: Check Proc Test Coverage
-    if: inputs.check_proc_test_coverage
-    uses: ./.github/workflows/proc-test-coverage-check.yml
+  procs_have_unit_tests_check:
+    name: Check Procs Have Unit Tests
+    if: inputs.check_procs_have_unit_tests
+    uses: ./.github/workflows/procs-have-unit-tests-check.yml
     with:
       test_directory: ${{ inputs.test_directory }}
       files: ${{ inputs.files }}

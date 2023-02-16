@@ -1,4 +1,4 @@
-set test_coverage_file [lindex $argv 0]
+set test_coverage_api [lindex $argv 0]
 set repository [lindex $argv 1]
 set test_dir [lindex $argv 2]
 set files [lrange $argv 3 end]
@@ -7,7 +7,7 @@ set file_procs [list]
 set file_tests [list]
 set procs_missing_tests false
 
-source $test_coverage_file
+source $test_coverage_api
 
 foreach file $files {
     set proc_names [test_coverage_proc_names_get "${repository}/${file}"]
