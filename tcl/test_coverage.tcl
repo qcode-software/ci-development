@@ -270,7 +270,8 @@ proc test_coverage {tcl_dir test_dir} {
     dict set data endpoints $endpoints_tests_map
     dict set data endpoint_count [dict get $endpoint_coverage total_count]
     dict set data endpoint_count_with_tests [dict get $endpoint_coverage count_with_tests]
-    dict set data endpoint_test_coverage_perct [dict get $endpoint_coverage percent_with_tests]
+    dict set data \
+        endpoint_test_coverage_perct [dict get $endpoint_coverage percent_with_tests]
 
     return $data
 }
