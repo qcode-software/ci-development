@@ -18,9 +18,19 @@ on:
         default: true
         required: false
         type: boolean
+      check_procs_have_unit_tests:
+        description: 'Flag for checking that procs have unit tests.'
+        default: true
+        required: false
+        type: boolean
       files:
         description: 'List of files to check for changes.'
         required: true
+        type: string
+      test_directory:
+        description: 'Directory within the repository where test files are located.'
+        default: test
+        required: false
         type: string
 
 jobs:
@@ -38,5 +48,14 @@ jobs:
     if: inputs.check_proc_names
     uses: ./.github/workflows/proc-name-check.yml
     with:
+      files: ${{ inputs.files }}
+    secrets: inherit
+
+  procs_have_unit_tests_check:
+    name: Check Procs Have Unit Tests
+    if: inputs.check_procs_have_unit_tests
+    uses: ./.github/workflows/procs-have-unit-tests-check.yml
+    with:
+      test_directory: ${{ inputs.test_directory }}
       files: ${{ inputs.files }}
     secrets: inherit

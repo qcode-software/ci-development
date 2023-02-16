@@ -1,0 +1,407 @@
+package require tcltest
+namespace import ::tcltest::test
+namespace import ::tcltest::cleanupTests
+namespace import ::tcltest::testConstraint
+
+set files [lsort [glob -nocomplain "~/ci-development/tcl/test_coverage.tcl"]]
+
+foreach file $files {
+    source $file
+}
+
+set setup {
+    set tcl_file "~/ci-development/tests/tcl/files/test-coverage/coverage_test.tcl"
+    set test_file "~/ci-development/tests/tcl/files/test-coverage/coverage_test.test"
+}
+
+test test_coverage_file_line_matches_get-1.0 \
+    {Get strings that match the regexp pattern from each line of the file.} \
+    -setup $setup \
+    -body {
+        set pattern {^\s*#\|\s*([^\n]+)}
+        set results [test_coverage_file_line_matches_get $pattern $tcl_file]
+        set expected [list \
+                          "Proc comment 1." \
+                          "Proc comment 2." \
+                          "Proc comment 3."]
+        set length [llength $results]
+        set expected_length [llength $expected]
+
+        if { $length != $expected_length } {
+            error "Length is $length but expected $expected_llength."
+        }
+
+        foreach comment $results {
+            if { $comment ni $expected } {
+                error "\"${comment}\" not in expected results."
+            }
+        }
+
+        foreach comment $expected {
+            if { $comment ni $results } {
+                error "\"${comment}\" missing from results."
+            }
+        }
+
+        return 1
+
+    } \
+    -result 1
+
+test test_coverage_proc_names_get-1.0 \
+    {Get proc names from a file.} \
+    -setup $setup \
+    -body {
+        set names [test_coverage_proc_names_get $tcl_file]
+        set expected [list \
+                          test_1 \
+                          test_2 \
+                          test_3]
+        set length [llength $names]
+        set expected_length [llength $expected]
+
+        if { $length != $expected_length } {
+            error "Length is $length but expected $expected_llength."
+        }
+
+        foreach name $names {
+            if { $name ni $expected } {
+                error "$name not in expected names."
+            }
+        }
+
+        foreach name $expected {
+            if { $name ni $names } {
+                error "$name missing from proc names."
+            }
+        }
+
+        return 1
+    } \
+    -result 1
+
+test test_coverage_test_names_get-1.0 \
+    {Get test names from a file.} \
+    -setup $setup \
+    -body {
+        set names [test_coverage_test_names_get $test_file]
+        set expected [list \
+                          test_1-1.0 \
+                          test_2-1.0 \
+                          test_3-1.0]
+        set length [llength $names]
+        set expected_length [llength $expected]
+
+        if { $length != $expected_length } {
+            error "Length is $length but expected $expected_llength."
+        }
+
+        foreach name $names {
+            if { $name ni $expected } {
+                error "$name not in expected names."
+            }
+        }
+
+        foreach name $expected {
+            if { $name ni $names } {
+                error "$name missing from test names."
+            }
+        }
+
+        return 1
+    } \
+    -result 1
+
+test test_coverage_endpoints_get-1.0 \
+    {Get endpoints from a file.} \
+    -setup $setup \
+    -body {
+        set endpoints [test_coverage_endpoints_get $tcl_file]
+        set expected [list \
+                          "GET /test/1" \
+                          "POST /test/1" \
+                          "PUT /test/1"]
+        set length [llength $endpoints]
+        set expected_length [llength $expected]
+
+        if { $length != $expected_length } {
+            error "Length is $length but expected $expected_length."
+        }
+
+        foreach endpoint $endpoints {
+            if { $endpoint ni $expected } {
+                error "\"$endpoint\" not in expected endpoints."
+            }
+        }
+
+        foreach endpoint $expected {
+            if { $endpoint ni $endpoints } {
+                error "\"$endpoint\" missing from endpoints."
+            }
+        }
+
+        return 1
+    } \
+    -result 1
+
+test test_coverage_file_tcl_lines_count-1.0 \
+    {Get a count of Tcl lines of code in a file.} \
+    -setup $setup \
+    -body {
+        return [test_coverage_file_tcl_lines_count $tcl_file]
+    } \
+    -result 29
+
+test test_coverage_procs_tests_map-1.0 \
+    {Map tests to procs.} \
+    -body {
+        set procs [dict create \
+                       file_1.tcl [list file_1_proc_1] \
+                       file_2.tcl [list \
+                                       file_2_proc_1 \
+                                       file_2_proc_2] \
+                       file_3.tcl [list file_3_proc_1]]
+        set tests [dict create \
+                       tests_file_1.test [list \
+                                              file_1_proc_1-1.0 \
+                                              file_1_proc_1-2.0] \
+                       tests_file_2.test [list \
+                                              file_2_proc_1-1.0 \
+                                              file_2_proc_2-1.0]]
+        set expected {
+            file_1.tcl {
+                file_1_proc_1 {
+                    tests_file_1.test {
+                        file_1_proc_1-1.0
+                        file_1_proc_1-2.0
+                    }
+                }
+            }
+            file_2.tcl {
+                file_2_proc_1 {
+                    tests_file_2.test {
+                        file_2_proc_1-1.0
+                    }
+                }
+                file_2_proc_2 {
+                    tests_file_2.test {
+                        file_2_proc_2-1.0
+                    }
+                }
+            }
+            file_3.tcl {
+                file_3_proc_1 {}
+            }
+        }
+
+        set map [test_coverage_procs_tests_map $procs $tests]
+
+        dict for {tcl_file procs_tests} $expected {
+            if { ![dict exists $map $tcl_file] } {
+                error "File \"${tcl_file}\" not found in map."
+            }
+
+            dict for {proc_name tests} $procs_tests {
+                if { ![dict exists $map $tcl_file $proc_name] } {
+                    error "Proc \"${proc_name}\" from file \"${tcl_file}\" not\
+                           found in map."
+                }
+
+                dict for {test_file test_names} $tests {
+                    if { ![dict exists $map $tcl_file $proc_name $test_file] } {
+                        error "Test file \"${test_file}\" for proc \"${proc_name}\"\
+                               from file \"${tcl_file}\" not found in map."
+                    }
+
+                    set map_test_names [dict get $map \
+                                            $tcl_file \
+                                            $proc_name \
+                                            $test_file]
+
+                    foreach test_name $test_names {
+                        if { $test_name ni $map_test_names } {
+                            error "Test \"$test_name\" not found in map for key\
+                                   \{$tcl_file\} \{$proc_name\} \{$test_file\}."
+                        }
+                    }
+
+                    foreach test_name $map_test_names {
+                        if { $test_name ni $test_names } {
+                            error "Test \"$test_name\" not expected in map for key\
+                                   \{$tcl_file\} \{$proc_name\} \{$test_file\}."
+                        }
+                    }
+                }
+            }
+        }
+
+        return 1
+    } \
+    -result 1
+
+test test_coverage_endpoints_tests_map-1.0 \
+    {Map tests to endpoints.} \
+    -body {
+        set endpoints [dict create \
+                           file_1.tcl [list {GET /tests/:test_id}] \
+                           file_2.tcl [list \
+                                           {GET /files/:file_id} \
+                                           {POST /files/:file_id}] \
+                           file_3.tcl [list {PUT /files/tests/:test_id}]]
+        set tests [dict create \
+                       tests_file_1.test [list \
+                                              {GET::/tests/:test_id-1.0} \
+                                              {GET::/tests/:test_id-2.0}] \
+                       tests_file_2.test [list \
+                                              {GET::/files/:file_id-1.0} \
+                                              {POST::/files/:file_id-1.0}]]
+        set expected {
+            file_1.tcl {
+                {GET /tests/:test_id} {
+                    tests_file_1.test {
+                        {GET::/tests/:test_id-1.0}
+                        {GET::/tests/:test_id-2.0}
+                    }
+                }
+            }
+            file_2.tcl {
+                {GET /files/:file_id} {
+                    tests_file_2.test {
+                        {GET::/files/:file_id-1.0}
+                    }
+                }
+                {POST /files/:file_id} {
+                    tests_file_2.test {
+                        {POST::/files/:file_id-1.0}
+                    }
+                }
+            }
+            file_3.tcl {
+                {PUT /files/tests/:test_id} {}
+            }
+        }
+
+        set map [test_coverage_endpoints_tests_map $endpoints $tests]
+
+        dict for {tcl_file endpoints_tests} $expected {
+            if { ![dict exists $map $tcl_file] } {
+                error "File \"${tcl_file}\" not found in map."
+            }
+
+            dict for {endpoint_name tests} $endpoints_tests {
+                if { ![dict exists $map $tcl_file $endpoint_name] } {
+                    error "Endpoint \"${endpoint_name}\" from file \"${tcl_file}\" not\
+                           found in map."
+                }
+
+                dict for {test_file test_names} $tests {
+                    if { ![dict exists $map $tcl_file $endpoint_name $test_file] } {
+                        error "Test file \"${test_file}\" for endpoint\
+                               \"${endpoint_name}\" from file \"${tcl_file}\" not\
+                               found in map."
+                    }
+
+                    set map_test_names [dict get $map \
+                                            $tcl_file \
+                                            $endpoint_name \
+                                            $test_file]
+
+                    foreach test_name $test_names {
+                        if { $test_name ni $map_test_names } {
+                            error "Test \"$test_name\" not found in map for key\
+                                   \{$tcl_file\} \{$endpoint_name\} \{$test_file\}."
+                        }
+                    }
+
+                    foreach test_name $map_test_names {
+                        if { $test_name ni $test_names } {
+                            error "Test \"$test_name\" not expected in map for key\
+                                   \{$tcl_file\} \{$endpoint_name\} \{$test_file\}."
+                        }
+                    }
+                }
+            }
+        }
+
+        return 1
+    } \
+    -result 1
+
+test test_coverage_counts-1.0 \
+    {Count total functions, functions with tests, and calculate the percentage\
+     of functions with tests in a map.} \
+    -body {
+        set map {
+            file_1.tcl {
+                file_1_proc_1 {
+                    tests_file_1.test {
+                        file_1_proc_1-1.0
+                        file_1_proc_1-2.0
+                    }
+                }
+            }
+            file_2.tcl {
+                file_2_proc_1 {
+                    tests_file_2.test {
+                        file_2_proc_1-1.0
+                    }
+                }
+                file_2_proc_2 {
+                    tests_file_2.test {
+                        file_2_proc_2-1.0
+                    }
+                }
+            }
+            file_3.tcl {
+                file_3_proc_1 {}
+            }
+        }
+
+        return [test_coverage_counts $map]
+    } \
+    -result {total_count 4 count_with_tests 3 percent_with_tests 75.0}
+
+test test_coverage-1.0 \
+    {Get test coverage data for a project.} \
+    -setup $setup \
+    -body {
+        set data [test_coverage \
+                      "~/ci-development/tests/tcl/files/test-coverage" \
+                      "~/ci-development/tests/tcl/files/test-coverage"]
+
+        set keys [list \
+                      line_count \
+                      test_count \
+                      test_coverage_perct \
+                      procs \
+                      proc_count \
+                      proc_count_with_tests \
+                      proc_test_coverage_perct \
+                      endpoints \
+                      endpoint_count \
+                      endpoint_count_with_tests \
+                      endpoint_test_coverage_perct]
+
+        foreach key $keys {
+            if { ![dict exists $data $key] } {
+                error "Key \"${key}\" not found in result."
+            }
+        }
+
+        set test_count [dict get $data test_count]
+
+        if { $test_count != 3 } {
+            error "test_count was $test_count but expected 3."
+        }
+
+        set test_coverage_perct [dict get $data test_coverage_perct]
+
+        if { $test_coverage_perct != 50.0 } {
+            error "test_coverage_perct was $test_coverage_perct but expected 50.0."
+        }
+
+        return 1
+    } \
+    -result 1
+
+cleanupTests

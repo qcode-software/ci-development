@@ -7,13 +7,15 @@ on:
 
 jobs:
   linting:
-    name: Check Line Lengths and Proc Names in Changed Files
+    name: Check Line Lengths, Proc Names, and Proc Test Coverage in Changed Files
     uses: ./.github/workflows/qcode-ci.yml
     with:
       files: |
         scripts/**.tcl
         tcl/**.tcl
+      test_directory: tests
       max_line_length: 90
       check_line_lengths: true
       check_proc_names: true
+      check_procs_have_unit_tests: true
     secrets: inherit

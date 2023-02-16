@@ -1,0 +1,52 @@
+name: 'Procs Have Unit Tests Check'
+
+on:
+  workflow_call:
+    inputs:
+      test_directory:
+        description: 'Directory within the repository where test files are located.'
+        default: test
+        required: false
+        type: string
+      files:
+        description: 'List of files to check for changes.'
+        required: true
+        type: string
+
+jobs:
+  procs-have-unit-tests-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install tclsh tcllib tdom tclcurl libpgtcl
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Checkout Qcode CI
+        uses: actions/checkout@v3
+        with:
+          repository: qcode-software/ci-development
+          path: qcode-ci
+
+      - name: Get Changed Tcl Script Files
+        id: changed-files
+        uses: tj-actions/changed-files@v34
+        with:
+          files: ${{ inputs.files }}
+
+      - name: Check Procs Have Unit Tests
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Checking procs in the following files have unit tests: \
+            ${{ steps.changed-files.outputs.all_changed_files }}"
+          cd ${{ github.workspace }}/qcode-ci/scripts
+          tclsh procs-have-unit-tests-check.tcl \
+            ${{ github.workspace }}/qcode-ci/tcl/test_coverage.tcl \
+            ${{ github.workspace }} \
+            ${{ inputs.test_directory }} \
+            ${{ steps.changed-files.outputs.all_changed_files }}
