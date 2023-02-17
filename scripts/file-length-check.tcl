@@ -31,7 +31,7 @@ if { [dict size $long_files] > 0 } {
     puts "Files with more than ${max_lines} lines:"
 
     dict for {filename line_count} $long_files {
-        puts "  $filename :: $line_count"
+        puts "  $filename :: $line_count lines"
     }
 
     exit 1
