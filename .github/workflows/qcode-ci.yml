@@ -8,6 +8,11 @@ on:
         default: 90
         required: false
         type: number
+      max_file_length:
+        description: 'The maximum number of lines that a file can be.'
+        default: 500
+        required: false
+        type: number
       check_line_lengths:
         description: 'Flag for checking line lengths.'
         default: true
@@ -20,6 +25,11 @@ on:
         type: boolean
       check_procs_have_unit_tests:
         description: 'Flag for checking that procs have unit tests.'
+        default: true
+        required: false
+        type: boolean
+      check_file_lengths:
+        description: 'Flag for checking file lengths.'
         default: true
         required: false
         type: boolean
@@ -57,5 +67,14 @@ jobs:
     uses: ./.github/workflows/procs-have-unit-tests-check.yml
     with:
       test_directory: ${{ inputs.test_directory }}
+      files: ${{ inputs.files }}
+    secrets: inherit
+
+  file_length_check:
+    name: Check for Files Exceeding Max Lines
+    if: inputs.check_file_lengths
+    uses: ./.github/workflows/file-length-check.yml
+    with:
+      max_file_length: ${{ inputs.max_file_length }}
       files: ${{ inputs.files }}
     secrets: inherit

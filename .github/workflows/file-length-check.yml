@@ -1,0 +1,51 @@
+name: 'File Length Check'
+
+on:
+  workflow_call:
+    inputs:
+      max_file_length:
+        description: 'The maximum number of lines that a file can be.'
+        default: 500
+        required: false
+        type: number
+      files:
+        description: 'List of files to check for changes.'
+        required: true
+        type: string
+
+jobs:
+  file-length-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install tclsh tcllib tdom tclcurl libpgtcl
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Checkout Qcode CI
+        uses: actions/checkout@v3
+        with:
+          repository: qcode-software/ci-development
+          path: qcode-ci
+
+      - name: Get Changed Tcl Script Files
+        id: changed-files
+        uses: tj-actions/changed-files@v34
+        with:
+          files: ${{ inputs.files }}
+
+      - name: Check File Length
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Checking for line counts greater than ${{ inputs.max_line_length }} \
+          in files: ${{ steps.changed-files.outputs.all_changed_files }}"
+          cd ${{ github.workspace }}/qcode-ci/scripts
+          tclsh file-length-check.tcl \
+            ${{ inputs.max_file_length }} \
+            ${{ github.workspace }} \
+            ${{ steps.changed-files.outputs.all_changed_files }}
