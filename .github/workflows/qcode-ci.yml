@@ -13,6 +13,11 @@ on:
         default: 500
         required: false
         type: number
+      max_proc_body_length:
+        description: 'The maximum number of lines that a proc body can be.' 
+        default: 150
+        required: false
+        type: number
       check_line_lengths:
         description: 'Flag for checking line lengths.'
         default: true
@@ -30,6 +35,11 @@ on:
         type: boolean
       check_file_lengths:
         description: 'Flag for checking file lengths.'
+        default: true
+        required: false
+        type: boolean
+      check_proc_lengths:
+        description: 'Flag for checking proc body lengths.'
         default: true
         required: false
         type: boolean
@@ -58,6 +68,15 @@ jobs:
     if: inputs.check_proc_names
     uses: ./.github/workflows/proc-name-check.yml
     with:
+      files: ${{ inputs.files }}
+    secrets: inherit
+
+  proc_length_check:
+    name: Check for Proc Bodies Exceeding Max Lines
+    if: inputs.check_proc_lengths
+    uses: ./.github/workflows/proc-length-check.yml
+    with:
+      max_proc_body_length: ${{ inputs.max_proc_body_length }}
       files: ${{ inputs.files }}
     secrets: inherit
 

@@ -64,4 +64,108 @@ test linter_proc_names_parse-1.0 \
     } \
     -result 1
 
+test linter_tcl_commands-1.0 \
+    {Get the Tcl commands from a string.} \
+    -setup $setup \
+    -body {
+        set test {
+            proc test_1 {args} {
+                # This is a test proc.
+                return 1
+            }
+
+            set foo "bar"
+        }
+
+        set commands [linter_tcl_commands $test]
+
+        set command1 [lindex $commands 0]
+        set command2 [lindex $commands 1]
+
+        if { [lindex $command1 0] ne "proc" } {
+            error "Expected proc but got [lindex $command1 0]."
+        }
+
+        if { [lindex $command1 1] ne "test_1" } {
+            error "Expected test_1 but got [lindex $command1 1]."
+        }
+
+        if { [llength [lindex $command1 2]] != 1
+             || [lindex [lindex $command1 2] 0] ne "args" } {
+            error "Expected {args} but got [lindex $command1 2]."
+        }
+
+        if { [llength [split [string trim [lindex $command1 3]] "\n"]] != 2 } {
+            error "Expected 2 lines in proc test_1 body but got\
+                   [string trim [lindex $command1 3]]."
+        }
+
+        if { $command2 ne {set foo "bar"} } {
+            error "Expected {set foo "bar"} but got $command2."
+        }
+
+        return 1
+    } \
+    -result 1
+
+test linter_proc_lengths-1.0 \
+    {Get body length of procs in a string.} \
+    -setup $setup \
+    -body {
+        set test {
+            proc test_1 {args} {
+                # This is a test proc.
+                return 1
+            }
+
+            proc test_2 {} {
+                set foo 1
+                set bar 2
+
+                return [expr {$foo + $bar}]
+            }
+
+            namespace eval tests {
+
+                namespace export test_3
+
+                namespace ensemble create
+
+                proc test_3 {args} {
+                    #| Ensemble proc.
+
+                    return "a"
+                }
+            }
+
+            namespace eval test_vars {
+                set vars [list]
+                lappend vars \
+                    [dict create \
+                         a 1 \
+                         b 2 \
+                         c 3] \
+                    [dict create \
+                         a 4 \
+                         b 5 \
+                         c 6]
+
+                proc test_4 {args} {
+                    return 4
+                }
+            }
+        }
+
+        return [linter_proc_lengths $test]
+    } \
+    -result {test_1 2 test_2 4 test_3 3 test_4 1}
+
+test linter_file_proc_lengths-1.0 \
+    {Get body length of procs in a file.} \
+    -setup $setup \
+    -body {
+        return [linter_file_proc_lengths $test_file] 
+    } \
+    -result {this_is_a_long_proc_name_for_testing 5 linter_test 3 linter_test_two 3 does_not_start_with_linter_test 3}
+
 cleanupTests

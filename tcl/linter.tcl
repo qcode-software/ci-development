@@ -77,58 +77,6 @@ proc linter_proc_names_parse {string} {
     return $proc_names
 }
 
-# proc linter_procs_get {string} {
-
-#     set lines [split $string "\n"]
-#     set pattern {^\s*proc\s+:{0,2}(?:[a-z0-9_-]+::)*(?:[a-z0-9_-]+)\s+}
-#     set line_no 1
-#     set procs_starts [list]
-
-#     foreach line $lines {
-#         if { [regexp $pattern $line] } {
-#             lappend procs_starts $line_no
-#         }
-
-#         incr line_no
-#     }
-
-#     set proc_lines [list]
-#     set count [llength $proc_starts]
-
-#     if { [llength $procs_starts] == 1} {
-#         set proc_ends $line_no
-#     }
-# }
-
-# proc linter_proc_body_length {contents} {
-#     # Get indexes of proc definitions.
-#     # Need to parse:
-#     # "proc"
-#     # proc name
-#     # arguments
-#     # body
-
-#     # Proc line count begins at body start.
-
-#     # What if "{" appears in a string somewhere?
-#     #   Would it always be preceded by a backslash?
-
-#     set paren_count 0
-#     set end_index 0
-
-#     foreach character [split [string trim $contents] ""] {
-#         if { $character eq "{" } {
-#             incr paren_count
-#         } elseif { $character eq "}" } {
-#             incr paren_count -1
-#         }
-
-#         if { $paren_count == 0 } {
-#             incr end_index
-#         }
-#     }
-# }
-
 proc linter_tcl_commands {script} {
     #| Get Tcl commands that are in the script.
     #|
@@ -192,24 +140,15 @@ proc linter_tcl_commands {script} {
     return $commands
 }
 
-proc linter_proc_lengths {file} {
+proc linter_file_proc_lengths {file} {
+    #| Returns proc names and the line count of the body of each proc within the
+    #| given file.
 
     try {
         set handle [open $file r]
         set contents [read $handle]
-        set commands [linter_tcl_commands $contents]
-        set proc_lengths [dict create]
 
-        foreach command $commands {
-            if { [lindex $command 0] eq "proc" } {
-                set proc_name [lindex $command 1]
-                set body_length [llength [split [string trim [lindex $command 3]] "\n"]]
-
-                dict set proc_lengths $proc_name $body_length
-            }
-        }
-
-        return $proc_lengths
+        return [linter_proc_lengths $contents]
     } on error [list message options] {
         error $message [dict get $options -errorinfo] [dict get $options -errorcode]
     } finally {
@@ -217,4 +156,30 @@ proc linter_proc_lengths {file} {
             close $handle
         }
     }
+}
+
+proc linter_proc_lengths {string} {
+    #| Returns proc names and the line count of the body of each proc within the
+    #| given string.
+
+    set commands [linter_tcl_commands $string]
+    set proc_lengths [dict create]
+
+    foreach command $commands {
+        switch -regexp $command {
+            {^proc} {
+                set proc_name [lindex $command 1]
+                set body_length [llength [split [string trim [lindex $command 3]] "\n"]]
+
+                dict set proc_lengths $proc_name $body_length
+            }
+            {^namespace eval} {
+                set proc_lengths [dict merge \
+                                      $proc_lengths \
+                                      [linter_proc_lengths [lindex $command 3]]]
+            }
+        }
+    }
+
+    return $proc_lengths
 }
