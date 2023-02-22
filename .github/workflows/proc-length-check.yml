@@ -9,7 +9,7 @@ on:
         type: string
       max_proc_body_length:
         description: 'The maximum number of lines that a proc body can be.' 
-        default: 150
+        default: 80
         required: false
         type: number
 
