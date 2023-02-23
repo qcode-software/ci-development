@@ -54,46 +54,86 @@ on:
         type: string
 
 jobs:
-  line_length_check:
-    name: Check for Lines Exceeding Max Chars
-    if: inputs.check_line_lengths
-    uses: ./.github/workflows/line-length-check.yml
-    with:
-      max_line_length: ${{ inputs.max_line_length }}
-      files: ${{ inputs.files }}
-    secrets: inherit
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install tclsh tcllib tdom tclcurl libpgtcl
 
-  proc_name_check:
-    name: Check for Proc Names Not Prefixed with File Name
-    if: inputs.check_proc_names
-    uses: ./.github/workflows/proc-name-check.yml
-    with:
-      files: ${{ inputs.files }}
-    secrets: inherit
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-  proc_length_check:
-    name: Check for Proc Bodies Exceeding Max Lines
-    if: inputs.check_proc_lengths
-    uses: ./.github/workflows/proc-length-check.yml
-    with:
-      max_proc_body_length: ${{ inputs.max_proc_body_length }}
-      files: ${{ inputs.files }}
-    secrets: inherit
+      - name: Checkout Qcode CI
+        uses: actions/checkout@v3
+        with:
+          repository: qcode-software/ci-development
+          path: qcode-ci
 
-  procs_have_unit_tests_check:
-    name: Check Procs Have Unit Tests
-    if: inputs.check_procs_have_unit_tests
-    uses: ./.github/workflows/procs-have-unit-tests-check.yml
-    with:
-      test_directory: ${{ inputs.test_directory }}
-      files: ${{ inputs.files }}
-    secrets: inherit
+      - name: Get Changed Tcl Script Files
+        id: changed-files
+        uses: tj-actions/changed-files@v34
+        with:
+          files: ${{ inputs.files }}
 
-  file_length_check:
-    name: Check for Files Exceeding Max Lines
-    if: inputs.check_file_lengths
-    uses: ./.github/workflows/file-length-check.yml
-    with:
-      max_file_length: ${{ inputs.max_file_length }}
-      files: ${{ inputs.files }}
-    secrets: inherit
+      - name: Check for Lines Exceeding Max Chars
+        if: inputs.check_line_lengths && steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Checking line length is under ${{ inputs.max_line_length }} chars \
+          in files: ${{ steps.changed-files.outputs.all_changed_files }}"
+          cd ${{ github.workspace }}/qcode-ci/scripts
+          tclsh line-length-check.tcl \
+            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
+            ${{ inputs.max_line_length }} \
+            ${{ github.workspace }} \
+            ${{ steps.changed-files.outputs.all_changed_files }}
+
+      - name: Check for Proc Names Not Prefixed with File Name
+        if: inputs.check_proc_names && steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Checking proc name prefixes in files: \
+            ${{ steps.changed-files.outputs.all_changed_files }}"
+          cd ${{ github.workspace }}/qcode-ci/scripts
+          tclsh proc-name-check.tcl \
+            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
+            ${{ github.workspace }} \
+            ${{ steps.changed-files.outputs.all_changed_files }}
+
+
+      - name: Check for Proc Bodies Exceeding Max Lines
+        if: inputs.check_proc_lengths && steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Checking proc body lengths in files: \
+            ${{ steps.changed-files.outputs.all_changed_files }}"
+          cd ${{ github.workspace }}/qcode-ci/scripts
+          tclsh proc-length-check.tcl \
+            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
+            ${{ inputs.max_proc_body_length }} \
+            ${{ github.workspace }} \
+            ${{ steps.changed-files.outputs.all_changed_files }}
+
+      - name: Check Procs Have Unit Tests
+        if: inputs.check_procs_have_unit_tests && steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Checking procs in the following files have unit tests: \
+            ${{ steps.changed-files.outputs.all_changed_files }}"
+          cd ${{ github.workspace }}/qcode-ci/scripts
+          tclsh procs-have-unit-tests-check.tcl \
+            ${{ github.workspace }}/qcode-ci/tcl/test_coverage.tcl \
+            ${{ github.workspace }} \
+            ${{ inputs.test_directory }} \
+            ${{ steps.changed-files.outputs.all_changed_files }}
+
+      - name: Check for Files Exceeding Max Lines
+        if: inputs.check_file_lengths && steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Checking for line counts greater than ${{ inputs.max_line_length }} \
+          in files: ${{ steps.changed-files.outputs.all_changed_files }}"
+          cd ${{ github.workspace }}/qcode-ci/scripts
+          tclsh file-length-check.tcl \
+            ${{ inputs.max_file_length }} \
+            ${{ github.workspace }} \
+            ${{ steps.changed-files.outputs.all_changed_files }}
