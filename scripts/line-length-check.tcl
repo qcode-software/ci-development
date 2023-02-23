@@ -6,6 +6,8 @@ set long_lines [list]
 
 source $linter
 
+puts "Checking line length is under $max_line_length chars in files that have changed."
+
 foreach file $files {
     set lines [linter_report_lines_over_length \
                    "${repository}/${file}" \
@@ -13,7 +15,7 @@ foreach file $files {
     lappend long_lines {*}$lines
 
     foreach line $lines {
-        puts $line
+        puts "$line"
     }
 }
 

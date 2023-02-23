@@ -5,6 +5,8 @@ set reported_procs [list]
 
 source $linter
 
+puts "Checking proc name prefixes in files that have changed."
+
 foreach file $files {
     set lines [linter_report_procs_without_filename_prefix \
                    "${repository}/${file}"]
