@@ -3,6 +3,8 @@ set repository [lindex $argv 1]
 set files [lrange $argv 2 end]
 set long_files [list]
 
+puts "Checking for files that are more than $max_lines lines long."
+
 foreach file $files {
     try {
         set handle [open "${repository}/${file}" r]
@@ -28,10 +30,8 @@ foreach file $files {
 
 if { [dict size $long_files] > 0 } {
 
-    puts "Files with more than ${max_lines} lines:"
-
     dict for {filename line_count} $long_files {
-        puts "  $filename :: $line_count lines"
+        puts "The file $filename has $line_count lines."
     }
 
     exit 1

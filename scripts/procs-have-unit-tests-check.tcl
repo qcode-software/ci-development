@@ -9,6 +9,8 @@ set procs_missing_tests false
 
 source $test_coverage_api
 
+puts "Checking for procs that do not have at least one unit test."
+
 foreach file $files {
     set proc_names [test_coverage_proc_names_get "${repository}/${file}"]
     dict set file_procs $file $proc_names
@@ -28,7 +30,7 @@ dict for {filename procs_tests} $map {
 
         if { [dict size $tests] == 0 } {
             set procs_missing_tests true
-            puts "Missing unit test: $filename :: $proc_name"
+            puts "The proc \"$proc_name\" in file $filename doesn't have a unit test."
         }
     }
 }

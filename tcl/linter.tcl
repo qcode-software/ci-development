@@ -15,8 +15,8 @@ proc linter_report_lines_over_length {
             if { $line_length > $max_line_length } {
                 set partial_line [string range [string trimleft $line] 0 15]
 
-                set details "[file tail $file] :: line $line_no :: "
-                append details "length: $line_length chars :: ${partial_line}..."
+                set details "Line $line_no in file $file is $line_length chars long"
+                append details " - ${partial_line}..."
 
                 lappend report $details
             }
@@ -49,7 +49,8 @@ proc linter_report_procs_without_filename_prefix {file} {
 
         foreach proc_name $proc_names {
             if { ![string match "${prefix}*" $proc_name] } {
-                lappend report "$filename :: $proc_name"
+                lappend report "The proc name \"$proc_name\" in file $filename is not\
+                                prefixed with \"$prefix\"."
             }
         }
 
