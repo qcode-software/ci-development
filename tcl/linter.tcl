@@ -183,7 +183,3 @@ proc linter_proc_lengths {string} {
 
     return $proc_lengths
 }
-
-proc test-failing-workflow-step {args} {
-    return 1
-}
