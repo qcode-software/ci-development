@@ -80,7 +80,12 @@ jobs:
           files: ${{ inputs.files }}
 
       - name: Check for Lines Exceeding Max Chars
-        if: inputs.check_line_lengths && steps.changed-files.outputs.any_changed == 'true'
+        id: check-line-length
+        if: >
+          always()
+          && steps.changed-files.outcome == 'success'
+          && inputs.check_line_lengths
+          && steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Checking line length is under ${{ inputs.max_line_length }} chars \
           in files: ${{ steps.changed-files.outputs.all_changed_files }}"
@@ -92,7 +97,11 @@ jobs:
             ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Check for Proc Names Not Prefixed with File Name
-        if: inputs.check_proc_names && steps.changed-files.outputs.any_changed == 'true'
+        if: >
+          always()
+          && steps.changed-files.outcome == 'success'
+          && inputs.check_proc_names
+          && steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Checking proc name prefixes in files: \
             ${{ steps.changed-files.outputs.all_changed_files }}"
@@ -104,7 +113,11 @@ jobs:
 
 
       - name: Check for Proc Bodies Exceeding Max Lines
-        if: inputs.check_proc_lengths && steps.changed-files.outputs.any_changed == 'true'
+        if: >
+          always()
+          && steps.changed-files.outcome == 'success'
+          && inputs.check_proc_lengths
+          && steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Checking proc body lengths in files: \
             ${{ steps.changed-files.outputs.all_changed_files }}"
@@ -116,7 +129,11 @@ jobs:
             ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Check Procs Have Unit Tests
-        if: inputs.check_procs_have_unit_tests && steps.changed-files.outputs.any_changed == 'true'
+        if: >
+          always()
+          && steps.changed-files.outcome == 'success'
+          && inputs.check_procs_have_unit_tests
+          && steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Checking procs in the following files have unit tests: \
             ${{ steps.changed-files.outputs.all_changed_files }}"
@@ -128,7 +145,11 @@ jobs:
             ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Check for Files Exceeding Max Lines
-        if: inputs.check_file_lengths && steps.changed-files.outputs.any_changed == 'true'
+        if: >
+          always()
+          && steps.changed-files.outcome == 'success'
+          && inputs.check_file_lengths
+          && steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Checking for line counts greater than ${{ inputs.max_line_length }} \
           in files: ${{ steps.changed-files.outputs.all_changed_files }}"
