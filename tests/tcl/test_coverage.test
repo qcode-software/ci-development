@@ -163,17 +163,17 @@ test test_coverage_procs_tests_map-1.0 \
                        file_3.tcl [list file_3_proc_1]]
         set tests [dict create \
                        tests_file_1.test [list \
-                                              file_1_proc_1-1.0 \
-                                              file_1_proc_1-2.0] \
+                                              file_1_proc_1-1 \
+                                              file_1_proc_1-2.2] \
                        tests_file_2.test [list \
                                               file_2_proc_1-1.0 \
-                                              file_2_proc_2-1.0]]
+                                              file_2_proc_2-10.10]]
         set expected {
             file_1.tcl {
                 file_1_proc_1 {
                     tests_file_1.test {
-                        file_1_proc_1-1.0
-                        file_1_proc_1-2.0
+                        file_1_proc_1-1
+                        file_1_proc_1-2.2
                     }
                 }
             }
@@ -185,7 +185,7 @@ test test_coverage_procs_tests_map-1.0 \
                 }
                 file_2_proc_2 {
                     tests_file_2.test {
-                        file_2_proc_2-1.0
+                        file_2_proc_2-10.10
                     }
                 }
             }
@@ -251,28 +251,28 @@ test test_coverage_endpoints_tests_map-1.0 \
         set tests [dict create \
                        tests_file_1.test [list \
                                               {GET::/tests/:test_id-1.0} \
-                                              {GET::/tests/:test_id-2.0}] \
+                                              {GET::/tests/:test_id-2.2}] \
                        tests_file_2.test [list \
-                                              {GET::/files/:file_id-1.0} \
-                                              {POST::/files/:file_id-1.0}]]
+                                              {GET::/files/:file_id-1} \
+                                              {POST::/files/:file_id-10.10}]]
         set expected {
             file_1.tcl {
                 {GET /tests/:test_id} {
                     tests_file_1.test {
                         {GET::/tests/:test_id-1.0}
-                        {GET::/tests/:test_id-2.0}
+                        {GET::/tests/:test_id-2.2}
                     }
                 }
             }
             file_2.tcl {
                 {GET /files/:file_id} {
                     tests_file_2.test {
-                        {GET::/files/:file_id-1.0}
+                        {GET::/files/:file_id-1}
                     }
                 }
                 {POST /files/:file_id} {
                     tests_file_2.test {
-                        {POST::/files/:file_id-1.0}
+                        {POST::/files/:file_id-10.10}
                     }
                 }
             }
