@@ -31,7 +31,7 @@ proc test_coverage_proc_names_get {file} {
 proc test_coverage_test_names_get {file} {
     #| Get test names from the given file.
 
-    set pattern {^\s*test\s+([a-zA-Z0-9_-]+-[0-9]+\.[0-9]+)\s+}
+    set pattern {^\s*test\s+([a-zA-Z0-9_-]+-[0-9]+(?:\.[0-9]+)?)\s+}
     return [test_coverage_file_line_matches_get $pattern $file]
 }
 
@@ -103,7 +103,9 @@ proc test_coverage_procs_tests_map {procs tests} {
     dict for {filename proc_names} $procs {
         foreach proc_name $proc_names {
             regsub -all {\W} $proc_name {\\&} escaped_name
-            set pattern "^${escaped_name}-\[0-9\]+\\.\[0-9\]+$"
+            set pattern [string map \
+                             [list {$escaped_name} $escaped_name] \
+                             {^$escaped_name-[0-9]+(\.[0-9]+)?$}]
             set test_matches [dict create]
 
             dict for {test_filename test_names} $tests {
@@ -160,7 +162,9 @@ proc test_coverage_endpoints_tests_map {endpoints tests} {
     dict for {filename endpoint_names} $endpoints {
         foreach endpoint_name $endpoint_names {
             regsub -all {\W} [string map {" " ::} $endpoint_name] {\\&} escaped_name
-            set pattern "^${escaped_name}-\[0-9\]+\\.\[0-9\]+$"
+            set pattern [string map \
+                             [list {$escaped_name} $escaped_name] \
+                             {^$escaped_name-[0-9]+(\.[0-9]+)?$}]
             set test_matches [dict create]
 
             dict for {test_filename test_names} $tests {
