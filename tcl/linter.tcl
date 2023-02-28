@@ -170,7 +170,11 @@ proc linter_proc_lengths {string} {
         switch -regexp $command {
             {^proc} {
                 set proc_name [lindex $command 1]
-                set body_length [llength [split [string trim [lindex $command 3]] "\n"]]
+                set proc_body [lindex $command 3]
+                set body_length [llength [split [string trim $proc_body] "\n"]]
+                set query_count [llength [linter_sql_query_indices $proc_body]]
+                set query_length [linter_sql_queries_length $proc_body]
+                set body_length [expr {$body_length - $query_length + $query_count}]
 
                 dict set proc_lengths $proc_name $body_length
             }
@@ -183,4 +187,28 @@ proc linter_proc_lengths {string} {
     }
 
     return $proc_lengths
+}
+
+proc linter_sql_queries_length {string} {
+    #| Get the combined length of all SQL queries in a string.
+
+    set line_count 0
+
+    foreach indices [linter_sql_query_indices $string] {
+        set query [string range $string [lindex $indices 0] [lindex $indices 1]]
+        incr line_count [llength [split $query "\n"]]
+    }
+
+    return $line_count
+}
+
+proc linter_sql_query_indices {string} {
+    #| Get the indexes of SQL queries in a string.
+
+    set pattern {(?:\{(?:\s)*select[^\}]+\sfrom\s+[^\}]+\})}
+    append pattern {|(?:\{(?:\s)*insert\s+into[^\}]+\})}
+    append pattern {|(?:\{(?:\s)*update[^\}]+set[^\}]+\})}
+    append pattern {|(?:\{(?:\s)*delete\s+from[^\}]+\})}
+
+    return [regexp -all -inline -indices $pattern $string]
 }
