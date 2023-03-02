@@ -10,6 +10,6 @@ puts "Checking line length is under $max_line_length chars in files that have ch
 set tcl_files [lmap x $files {file join $repository $x}]
 set count [linter_report_lines_over_length $tcl_files $max_line_length]
 
-if { [llength $long_lines] > 0 } {
+if { $count > 0 } {
     exit 1
 }
