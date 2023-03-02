@@ -16,6 +16,12 @@ proc test_3 {args} {
     return true
 }
 
+proc test_4 {args} {
+    #| Proc comment 4.
+
+    return true
+}
+
 register GET /test/1 {args} {
     return true
 }

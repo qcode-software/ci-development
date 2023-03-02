@@ -13,23 +13,124 @@ set setup {
     set test_file "~/ci-development/tests/tcl/files/linter_test.tcl"
 }
 
+test linter_files_over_length-1.0 \
+    {Get long files from given files.} \
+    -setup $setup \
+    -body {
+        set long_files [linter_files_over_length $test_file 10]
+
+        if { [dict size $long_files] != 1 } {
+            error "Expected 1 file but got [dict size $long_files]."
+        }
+
+        if { [file tail [lindex $long_files 0]] ne "linter_test.tcl" } {
+            error "Expected linter_test.tcl but got [file tail [lindex $long_files 0]]."
+        }
+
+        if { [lindex $long_files 1] != 26 } {
+            error "Expected file length to be 26 but got [lindex $long_files 1]."
+        }
+
+        return 1
+    } \
+    -result 1
+
+test linter_report_files_over_length-1.0 \
+    {Test that long files are reported.} \
+    -setup $setup \
+    -body {
+        return [linter_report_files_over_length $test_file 10]
+    } \
+    -result 1
+
+test linter_lines_over_length-1.0 \
+    {Get long lines from given files.} \
+    -setup $setup \
+    -body {
+        set long_lines [linter_lines_over_length $test_file 90]
+
+        if { [dict size $long_lines] != 1 } {
+            error "Expected 1 file but got [dict size $long_lines]."
+        }
+
+        set lines [lindex $long_lines 1]
+
+        if { [llength $lines] != 2 } {
+            error "Expected 2 lines but got [llength $lines]."
+        }
+
+        set line_1 [lindex $lines 0]
+        set line_2 [lindex $lines 1]
+
+        if { [dict get $line_1 line_length] != 96 } {
+            error "Expected line length for first long line to be 96 but got\
+                   [dict get $line_1 line_length]."
+        }
+
+        if { [dict get $line_1 line_no] != 1 } {
+            error "Expected line no for first long line to be 1 but got\
+                   [dict get $line_1 line_no]."
+        }
+
+        if { [dict get $line_2 line_length] != 100 } {
+            error "Expected line length for second long line to be 100 but got\
+                   [dict get $line_2 line_length]."
+        }
+
+        if { [dict get $line_2 line_no] != 2 } {
+            error "Expected line no for second long line to be 2 but got\
+                   [dict get $line_2 line_no]."
+        }
+
+        return 1
+    } \
+    -result 1
+
 test linter_report_lines_over_length-1.0 \
     {Test long lines are reported for a given file.} \
     -setup $setup \
     -body {
-        set lines [linter_report_lines_over_length $test_file 90]
-
-        return [llength $lines]
+        return [linter_report_lines_over_length $test_file 90]
     } \
     -result 2
+
+test linter_procs_without_filename_prefix-1.0 \
+    {Get proc names not prefixed with the file name.} \
+    -setup $setup \
+    -body {
+        set procs [linter_procs_without_filename_prefix $test_file]
+
+        if { [dict size $procs] != 1 } {
+            error "Expected 1 file but got [dict size $procs]."
+        }
+
+        if { [lindex [lindex $procs 1] 0] ne "linter_test" } {
+            error "Expected prefix linter_test but got [lindex [lindex $procs 1] 0]."
+        }
+
+        set proc_names [lindex [lindex $procs 1] 1]
+
+        if { [llength $proc_names] != 2 } {
+            error "Expected 2 proc name but got [llength $proc_names]."
+        }
+
+        if { "this_is_a_long_proc_name_for_testing" ni $proc_names } {
+            error "this_is_a_long_proc_name_for_testing not found in proc names."
+        }
+
+        if { "does_not_start_with_linter_test" ni $proc_names } {
+            error "does_not_start_with_linter_test not found in proc names."
+        }
+
+        return 1
+    } \
+    -result 1
 
 test linter_report_procs_without_filename_prefix-1.0 \
     {Test proc names not prefixed with the file name are reported.} \
     -setup $setup \
     -body {
-        set procs [linter_report_procs_without_filename_prefix $test_file]
-
-        return [llength $procs]
+        return [linter_report_procs_without_filename_prefix $test_file]
     } \
     -result 2
 
@@ -265,12 +366,43 @@ test linter_proc_lengths-1.0 \
     } \
     -result {test_1 2 test_2 4 test_3 3 test_4 1 test_5 1 test_6 9}
 
-test linter_file_proc_lengths-1.0 \
-    {Get body length of procs in a file.} \
+test linter_procs_over_length-1.0 \
+    {Get body length of procs over a specified number of lines.} \
     -setup $setup \
     -body {
-        return [linter_file_proc_lengths $test_file] 
+        set procs [linter_procs_over_length $test_file 3]
+
+        if { [dict size $procs] != 1 } {
+            error "Expected 1 file but got [dict size $procs]."
+        }
+
+        if { [file tail [lindex $procs 0]] ne "linter_test.tcl" } {
+            error "Expected linter_test.tcl but got [file tail [lindex $procs 0]]."
+        }
+
+        if { [dict size [lindex $procs 1]] != 1 } {
+            error "Expected 1 proc but got [dict size [lindex $procs 1]]."
+        }
+
+        if { [lindex [lindex $procs 1] 0] ne "this_is_a_long_proc_name_for_testing" } {
+            error "Expected proc this_is_a_long_proc_name_for_testing but got\
+                  [lindex [lindex $procs 1] 0]."
+        }
+
+        if { [lindex [lindex $procs 1] 1] != 5 } {
+            error "Expected proc length to be 5 but got [lindex [lindex $procs 1] 1]."
+        }
+
+        return 1
     } \
-    -result {this_is_a_long_proc_name_for_testing 5 linter_test 3 linter_test_two 3 does_not_start_with_linter_test 3}
+    -result 1
+
+test linter_report_procs_over_length-1.0 \
+    {Test that procs with bodies over a specified number of lines are reported.} \
+    -setup $setup \
+    -body {
+        return [linter_report_procs_over_length $test_file 3]
+    } \
+    -result 1
 
 cleanupTests

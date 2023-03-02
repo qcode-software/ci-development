@@ -1,67 +1,174 @@
-proc linter_report_lines_over_length {
-    file
-    max_line_length
+proc linter_files_over_length {
+    files
+    max_file_length
 } {
-    #| Report lines in the file that have more chars than max line length.
+    #| Get files that have more lines than max file length.
 
-    try {
-        set handle [open $file r]
-        set contents [read $handle]
-        set report [list]
-        set line_no 1
+    set long_files [dict create]
 
-        foreach line [split $contents "\n"] {
-            set line_length [string length $line]
-            if { $line_length > $max_line_length } {
-                set partial_line [string range [string trimleft $line] 0 15]
+    foreach file $files {
+        try {
+            set handle [open $file r]
+            set contents [read $handle]
+            set lines [split $contents "\n"]
+            set count [llength $lines]
 
-                set details "Line $line_no in file $file is $line_length chars long"
-                append details " - ${partial_line}..."
-
-                lappend report $details
+            if { $count > $max_file_length } {
+                dict set long_files $file $count
             }
-
-            incr line_no
-        }
-
-        return $report
-    } on error [list message options] {
-        error $message [dict get $options -errorinfo] [dict get $options -errorcode]
-    } finally {
-        if { [info exists handle] } {
-            close $handle
+        } on error [list message options] {
+            error \
+                $message \
+                [dict get $options -errorinfo] \
+                [dict get $options -errorcode]
+        } finally {
+            if { [info exists handle] } {
+                close $handle
+            }
         }
     }
+
+    return $long_files
 }
 
-proc linter_report_procs_without_filename_prefix {file} {
-    #| Report proc names that are not prefixed with the file name.
+proc linter_report_files_over_length {
+    files
+    max_file_length
+} {
+    #| Report files that have more lines than max file length.
 
-    try {
-        set handle [open $file r]
-        set contents [read $handle]
-        set filename [file tail $file]
-        set length [string length [file extension $file]]
-        set prefix [string range $filename 0 end-$length]
-        set report [list]
+    set long_files [linter_files_over_length $files $max_file_length]
+    set count 0
 
-        set proc_names [linter_proc_names_parse $contents]
+    dict for {filename line_count} $long_files {
+        puts "The file $filename has $line_count lines."
+        incr count
+    }
 
-        foreach proc_name $proc_names {
-            if { ![string match "${prefix}*" $proc_name] } {
-                lappend report "The proc name \"$proc_name\" in file $filename is not\
-                                prefixed with \"$prefix\"."
+    return $count
+}
+
+proc linter_lines_over_length {
+    files
+    max_line_length
+} {
+    #| Get lines in the files that have more chars than max line length.
+
+    set long_lines [dict create]
+
+    foreach file $files {
+        try {
+            set handle [open $file r]
+            set contents [read $handle]
+            set report [list]
+            set line_no 1
+
+            foreach line [split $contents "\n"] {
+                set line_length [string length $line]
+
+                if { $line_length > $max_line_length } {
+                    dict lappend long_lines $file [dict create \
+                                                       line $line \
+                                                       line_length $line_length \
+                                                       line_no $line_no]
+                }
+
+                incr line_no
+            }
+        } on error [list message options] {
+            error $message [dict get $options -errorinfo] [dict get $options -errorcode]
+        } finally {
+            if { [info exists handle] } {
+                close $handle
             }
         }
+    }
 
-        return $report
-    } on error [list message options] {
-        error $message [dict get $options -errorinfo] [dict get $options -errorcode]
-    } finally {
-        if { [info exists handle] } {
-            close $handle
+    return $long_lines
+}
+
+proc linter_report_lines_over_length {
+    files
+    max_line_length
+} {
+    #| Report lines in the files that have more chars than max line length.
+
+    set long_lines [linter_lines_over_length $files $max_line_length]
+    set count 0
+
+    dict for {filename line_details} $long_lines {
+        foreach line_detail $line_details {
+            set line_no [dict get $line_detail line_no]
+            set line_length [dict get $line_detail line_length]
+            set line [dict get $line_detail line]
+            set partial_line [string range [string trimleft $line] 0 15]
+
+            set output "Line $line_no in file $filename is $line_length chars long"
+            append output " - ${partial_line}..."
+
+            puts $output
+
+            incr count
         }
     }
+
+    return $count
+}
+
+proc linter_procs_without_filename_prefix {files} {
+    #| Get procs that are not prefixed with the name of the file that they are in.
+
+    set procs [dict create]
+
+    foreach file $files {
+        try {
+            set handle [open $file r]
+            set contents [read $handle]
+            set filename [file tail $file]
+            set length [string length [file extension $file]]
+            set prefix [string range $filename 0 end-$length]
+            set proc_names [linter_proc_names_parse $contents]
+            set not_prefixed [list]
+
+            foreach proc_name $proc_names {
+                if { ![string match "${prefix}*" $proc_name] } {
+                    lappend not_prefixed $proc_name
+                }
+            }
+
+            if { [llength $not_prefixed] > 0 } {
+                dict set procs $file $prefix $not_prefixed
+            }
+        } on error [list message options] {
+            error $message [dict get $options -errorinfo] [dict get $options -errorcode]
+        } finally {
+            if { [info exists handle] } {
+                close $handle
+            }
+        }
+    }
+
+    return $procs
+}
+
+proc linter_report_procs_without_filename_prefix {files} {
+    #| Report procs that are not prefixed with the name of the file that they are in.
+
+    set procs [linter_procs_without_filename_prefix $files]
+    set count 0
+
+    dict for {filename prefix_procs} $procs {
+        set prefix [lindex $prefix_procs 0]
+        set proc_names [lindex $prefix_procs 1]
+
+        foreach proc_name $proc_names {
+            puts "The proc name \"$proc_name\" in file $filename is not prefixed\
+                  with \"$prefix\"."
+            incr count
+        }
+    }
+
+    return $count
 }
 
 proc linter_proc_names_parse {string} {
@@ -141,22 +248,53 @@ proc linter_tcl_commands {script} {
     return $commands
 }
 
-proc linter_file_proc_lengths {file} {
-    #| Returns proc names and the line count of the body of each proc within the
-    #| given file.
+proc linter_procs_over_length {
+    files
+    max_proc_length
+} {
+    #| Get procs that have a body line count over max proc length.
 
-    try {
-        set handle [open $file r]
-        set contents [read $handle]
+    set long_procs [dict create]
 
-        return [linter_proc_lengths $contents]
-    } on error [list message options] {
-        error $message [dict get $options -errorinfo] [dict get $options -errorcode]
-    } finally {
-        if { [info exists handle] } {
-            close $handle
+    foreach file $files {
+        try {
+            set handle [open $file r]
+            set contents [read $handle]
+
+            set proc_lengths [linter_proc_lengths $contents]
+
+            dict for {proc_name body_length} $proc_lengths {
+                if { $body_length > $max_proc_length } {
+                    dict set long_procs $file $proc_name $body_length
+                }
+            }
+        } on error [list message options] {
+            error $message [dict get $options -errorinfo] [dict get $options -errorcode]
+        } finally {
+            if { [info exists handle] } {
+                close $handle
+            }
         }
     }
+
+    return $long_procs
+}
+
+proc linter_report_procs_over_length {files max_proc_length} {
+    #| Report procs that have a body line count over max proc length.
+
+    set long_procs [linter_procs_over_length $files $max_proc_length]
+    set count 0
+
+    dict for {filename procs} $long_procs {
+        dict for {proc_name body_length} $procs {
+            puts "The proc \"$proc_name\" in file $filename has a body that is\
+                  $body_length long."
+            incr count
+        }
+    }
+
+    return $count
 }
 
 proc linter_proc_lengths {string} {

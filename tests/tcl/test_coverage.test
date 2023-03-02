@@ -23,12 +23,13 @@ test test_coverage_file_line_matches_get-1.0 \
         set expected [list \
                           "Proc comment 1." \
                           "Proc comment 2." \
-                          "Proc comment 3."]
+                          "Proc comment 3." \
+                          "Proc comment 4."]
         set length [llength $results]
         set expected_length [llength $expected]
 
         if { $length != $expected_length } {
-            error "Length is $length but expected $expected_llength."
+            error "Length is $length but expected $expected_length."
         }
 
         foreach comment $results {
@@ -56,7 +57,8 @@ test test_coverage_proc_names_get-1.0 \
         set expected [list \
                           test_1 \
                           test_2 \
-                          test_3]
+                          test_3 \
+                          test_4]
         set length [llength $names]
         set expected_length [llength $expected]
 
@@ -150,7 +152,7 @@ test test_coverage_file_tcl_lines_count-1.0 \
     -body {
         return [test_coverage_file_tcl_lines_count $tcl_file]
     } \
-    -result 29
+    -result 35
 
 test test_coverage_procs_tests_map-1.0 \
     {Map tests to procs.} \
@@ -396,11 +398,45 @@ test test_coverage-1.0 \
 
         set test_coverage_perct [dict get $data test_coverage_perct]
 
-        if { $test_coverage_perct != 50.0 } {
+        if { round($test_coverage_perct) != 43 } {
             error "test_coverage_perct was $test_coverage_perct but expected 50.0."
         }
 
         return 1
+    } \
+    -result 1
+
+test test_coverage_procs_without_unit_tests-1.0 \
+    {Get procs that do not have unit tests.} \
+    -setup $setup \
+    -body {
+        set procs [test_coverage_procs_without_unit_tests $tcl_file $test_file]
+
+        if { [dict size $procs] != 1 } {
+            error "Expected 1 file but got [dict size $procs]."
+        }
+
+        if { [llength [lindex $procs 1]] != 1 } {
+            error "Expected 1 proc but got [llength [lindex $procs 1]]."
+        }
+
+        if { [file tail [lindex $procs 0]] != "coverage_test.tcl" } {
+            error "Expected coverage_test.tcl but got [file tail [lindex $procs 0]]."
+        }
+
+        if { [lindex [lindex $procs 1] 0] != "test_4" } {
+            error "Expected test_4 but got [lindex [lindex $procs 1] 0]."
+        }
+
+        return 1
+    } \
+    -result 1
+
+test test_coverage_report_procs_without_unit_tests-1.0 \
+    {Test that procs that do not have unit tests are reported.} \
+    -setup $setup \
+    -body {
+        return [test_coverage_report_procs_without_unit_tests $tcl_file $test_file]
     } \
     -result 1
 

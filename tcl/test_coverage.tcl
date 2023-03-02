@@ -279,3 +279,57 @@ proc test_coverage {tcl_dir test_dir} {
 
     return $data
 }
+
+proc test_coverage_procs_without_unit_tests {
+    tcl_files
+    test_files
+} {
+    #| Get procs that do not have at least one unit test.
+
+    set file_procs [dict create]
+    set file_tests [dict create]
+    set procs_without [dict create]
+
+    foreach file $tcl_files {
+        set proc_names [test_coverage_proc_names_get $file]
+        dict set file_procs $file $proc_names
+    }
+
+    foreach test_file $test_files {
+        set tests [test_coverage_test_names_get $test_file]
+        dict set file_tests $test_file $tests
+    }
+
+    set map [test_coverage_procs_tests_map $file_procs $file_tests]
+
+    dict for {filename procs_tests} $map {
+
+        dict for {proc_name tests} $procs_tests {
+
+            if { [dict size $tests] == 0 } {
+                dict lappend procs_without $filename $proc_name
+            }
+        }
+    }
+
+    return $procs_without
+}
+
+proc test_coverage_report_procs_without_unit_tests {
+    tcl_files
+    test_files
+} {
+    #| Report procs that do not have at least one unit test.
+
+    set procs [test_coverage_procs_without_unit_tests $tcl_files $test_files]
+    set count 0
+
+    dict for {filename procs} $procs {
+        foreach proc_name $procs {
+            puts "The proc \"$proc_name\" in file $filename doesn't have a unit test."
+            incr count
+        }
+    }
+
+    return $count
+}
