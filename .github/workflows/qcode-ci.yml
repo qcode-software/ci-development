@@ -145,6 +145,7 @@ jobs:
         run: |
           cd ${{ github.workspace }}/qcode-ci/scripts
           tclsh file-length-check.tcl \
+            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ inputs.max_file_length }} \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
