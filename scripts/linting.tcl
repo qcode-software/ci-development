@@ -1,56 +1,149 @@
-set ci_repository [lindex $argv 0]
-set file_max_lines [lindex $argv 1]
-set proc_max_lines [lindex $argv 2]
-set max_line_length [lindex $argv 3]
-set repository [lindex $argv 4]
-set test_dir [lindex $argv 5]
-set files [lindex $argv 6 end]
+##########
+#
+# Dependencies
+#
 
-source [file join $ci_repository "tcl/linter.tcl"]
-source [file join $ci_repository "tcl/test_coverage.tcl"]
+# Requires qcode-tcl.
+# Requires ci-development project in home directory.
 
-if { [llength $files] == 0 } {
-    error "Usage: linting.tcl\
-             <CI repository>\
-             <file max lines>\
-             <proc max lines>\
-             <max line length>\
-             <repository>\
-             <test dir>\
-             <tcl dir or tcl files with relative path from repo>"
-} elseif { [llength $files] == 1
-           && [file isdirectory [file join $repository [lindex $files 0]]] } {
-    set tcl_files [glob [file join $repository [lindex $files 0] *.tcl]]
+##########
+#
+# Args
+#
+
+# -line_length <integer>
+#    Default: 90
+#    Report any lines that exceed this length.
+
+# -file_length <integer>
+#    Default: 500
+#    Report any files that exceed this number of lines.
+
+# -proc_length <integer>
+#    Default: 100
+#    Report any procs where the body exceeds this number of lines.
+#    Note: SQL queries within a proc body are only counted as 1 line.
+
+# -tcl_dir <directory>
+#    Default: current working directory
+#    The directory to search for Tcl files for linting.
+#    Must be a relative path from the current working directory.
+
+# -test_dir <directory>
+#    Default: current working directory
+#    The directory to search for test files for linting.
+#    Must be a relative path from the current working directory.
+
+# Any args that aren't specified at the command line will instead be taken from the config
+# file if one exists.
+#
+# Any args that aren't specified at the command line nor in a config file will be set to
+# the default value.
+
+
+##########
+#
+# Config File
+#
+
+# The optional config file must be named ".qcode-linting" and can be stored in the home
+# directory or within each project. This allows for project specific linting settings.
+#
+# Example config file:
+#
+# line_length = 80
+# file_length = 300
+# proc_length = 90
+# tcl_dir = tcl
+# test_dir = test
+
+source "~/ci-development/tcl/linter.tcl"
+source "~/ci-development/tcl/test_coverage.tcl"
+package require qcode
+package require fileutil
+
+set vars [dict create \
+              -line_length 90 \
+              -file_length 500 \
+              -proc_length 100 \
+              -tcl_dir "" \
+              -test_dir ""]
+
+qc::args $argv {*}$vars
+
+if { [file exists [file join [pwd] ".qcode-linting"]] } {
+    set config_file [file join [pwd] ".qcode-linting"]
+} elseif { [file exists [file join "~" ".qcode-linting"]] } {
+    set config_file [file join "~" ".qcode-linting"]
 } else {
-    set tcl_files [lmap x $files {file join $repository $x}]
+    set config_file ""
 }
 
-package require fileutil
-set test_files [fileutil::findByPattern [file join $repository $test_dir] "*.test"]
+if { $config_file ne "" } {
+    ::try {
+        set handle [open $config_file r]
+        set contents [read $handle]
+        set pairs [split $contents "\n"]
 
-puts "Checking for files that are more than $file_max_lines lines long."
+        foreach pair $pairs {
+            lassign [split $pair "="] name value
+            set name [string trim $name]
+            set value [string trim $value]
+
+            if { "-${name}" in [dict keys $vars] && "-${name}" ni $argv } {
+                set $name $value
+            }
+        }
+    } on error [list message options] {
+        error \
+            $message \
+            [dict get $options -errorinfo] \
+            [dict get $options -errorcode]
+    } finally {
+        if { [info exists handle] } {
+            close $handle
+        }
+    }
+}
+
+if { $tcl_dir eq "" } {
+    set tcl_dir [pwd]
+} else {
+    set tcl_dir [file join [pwd] $tcl_dir]
+}
+
+if { $test_dir eq "" } {
+    set test_dir [pwd]
+} else {
+    set test_dir [file join [pwd] $test_dir]
+}
+
+set tcl_files [fileutil::findByPattern $tcl_dir "*.tcl"]
+set test_files [fileutil::findByPattern $test_dir "*.test"]
+
+puts "Checking for files that are more than $file_length lines long."
 puts "---"
-set count [linter_report_files_over_length $tcl_files $file_max_lines]
+set count [linter_report_files_over_length $tcl_files $file_length]
 puts ""
-puts "$count files exceeding $file_max_lines lines found."
+puts "$count files exceeding $file_length lines found."
 
 puts ""
 puts "--------------------------------------------------"
 puts ""
-puts "Checking line length is under $max_line_length characters."
+puts "Checking line length is under $line_length characters."
 puts "---"
-set count [linter_report_lines_over_length $tcl_files $max_line_length]
+set count [linter_report_lines_over_length $tcl_files $line_length]
 puts ""
-puts "$count lines exceeding $max_line_length characters found."
+puts "$count lines exceeding $line_length characters found."
 
 puts ""
 puts "--------------------------------------------------"
 puts ""
-puts "Checking for procs that have bodies that are more than $proc_max_lines lines long."
+puts "Checking for procs that have bodies that are more than $proc_length lines long."
 puts "---"
-set count [linter_report_procs_over_length $tcl_files $proc_max_lines]
+set count [linter_report_procs_over_length $tcl_files $proc_length]
 puts ""
-puts "$count procs with bodies exceeding $proc_max_lines lines found."
+puts "$count procs with bodies exceeding $proc_length lines found."
 
 puts ""
 puts "--------------------------------------------------"

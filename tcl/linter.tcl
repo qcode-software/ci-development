@@ -289,7 +289,7 @@ proc linter_report_procs_over_length {files max_proc_length} {
     dict for {filename procs} $long_procs {
         dict for {proc_name body_length} $procs {
             puts "The proc \"$proc_name\" in file $filename has a body that is\
-                  $body_length long."
+                  $body_length lines long."
             incr count
         }
     }
