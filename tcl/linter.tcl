@@ -350,3 +350,74 @@ proc linter_sql_query_indices {string} {
 
     return [regexp -all -inline -indices $pattern $string]
 }
+
+proc linter_procs_first_line {string} {
+    #| Get the first line for each proc in the string.
+
+    set proc_lines [dict create]
+    set commands [linter_tcl_commands $string]
+
+    foreach command $commands {
+        switch -regexp $command {
+            {^proc} {
+                set proc_name [lindex $command 1]
+                set body_lines [split [string trim [lindex $command 3]] "\n"]
+                dict set proc_lines $proc_name [lindex $body_lines 0]
+            }
+            {^namespace eval} {
+                set proc_lines [dict merge \
+                                    $proc_lines \
+                                    [linter_procs_first_line [lindex $command 3]]]
+            }
+        }
+    }
+
+    return $proc_lines
+}
+
+proc linter_procs_without_proc_comment {files} {
+    #| Procs without a comment at the beginning of the body.
+
+    set procs [dict create]
+
+    foreach file $files {
+        ::try {
+            set handle [open $file r]
+            set contents [read $handle]
+            set proc_lines [linter_procs_first_line $contents]
+
+            dict for {proc_name line} $proc_lines {
+                if { ![regexp {^#.*} $line] } {
+                    dict lappend procs $file $proc_name
+                }
+            }
+        } on error [list message options] {
+            error \
+                $message \
+                [dict get $options -errorinfo] \
+                [dict get $options -errorinfo]
+        } finally {
+            if { [info exists handle] } {
+                close $handle
+            }
+        }
+    }
+
+    return $procs
+}
+
+proc linter_report_procs_without_proc_comment {files} {
+    #| Report procs that do not have a comment at the beginning of the body.
+
+    set procs [linter_procs_without_proc_comment $files]
+    set count 0
+
+    dict for {file_name procs} $procs {
+        foreach proc_name $procs {
+            puts "The proc $proc_name in file $file_name does not have a proc comment."
+            incr count
+        }
+    }
+
+    return $count
+}
