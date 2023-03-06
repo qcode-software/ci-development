@@ -162,3 +162,12 @@ puts "---"
 set count [test_coverage_report_procs_without_unit_tests $tcl_files $test_files]
 puts ""
 puts "$count procs that do not have a unit test found."
+
+puts ""
+puts "--------------------------------------------------"
+puts ""
+puts "Checking for procs that do not begin with a comment."
+puts "---"
+set count [linter_report_procs_without_proc_comment $tcl_files]
+puts ""
+puts "$count procs that do not begin with a comment found."

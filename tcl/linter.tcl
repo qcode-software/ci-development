@@ -414,7 +414,7 @@ proc linter_report_procs_without_proc_comment {files} {
 
     dict for {file_name procs} $procs {
         foreach proc_name $procs {
-            puts "The proc $proc_name in file $file_name does not have a proc comment."
+            puts "The proc $proc_name in file $file_name does not begin with a comment."
             incr count
         }
     }

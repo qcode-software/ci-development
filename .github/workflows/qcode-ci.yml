@@ -43,6 +43,11 @@ on:
         default: true
         required: false
         type: boolean
+      check_proc_comments:
+        description: 'Flag for checking that procs begin with a comment.'
+        default: true
+        required: false
+        type: boolean
       files:
         description: 'List of files to check for changes.'
         required: true
@@ -147,5 +152,18 @@ jobs:
           tclsh file-length-check.tcl \
             ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ inputs.max_file_length }} \
+            ${{ github.workspace }} \
+            ${{ steps.changed-files.outputs.all_changed_files }}
+
+      - name: Check Procs Being With Comment
+        if: >
+          always()
+          && steps.changed-files.outcome == 'success'
+          && inputs.check_proc_comments
+          && steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          cd ${{ github.workspace }}/qcode-ci/scripts
+          tclsh proc-comment-check.tcl \
+            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
