@@ -62,8 +62,7 @@ exec tclsh "$0" ${1+"$@"}
 # tcl_dir = tcl
 # test_dir = test
 
-source "~/ci-development/tcl/linter.tcl"
-source "~/ci-development/tcl/test_coverage.tcl"
+package require qcode-linter
 package require qcode
 package require fileutil
 
