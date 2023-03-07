@@ -197,7 +197,7 @@ puts "---"
 set procs_without_tests [test_coverage_procs_without_unit_tests $tcl_files $test_files]
 test_coverage_report_procs_without_unit_tests $procs_without_tests
 set count 0
-foreach values [dict values $procs_without_tests] {
+foreach value [dict values $procs_without_tests] {
     incr count [llength $value]
 }
 
