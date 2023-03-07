@@ -39,7 +39,13 @@ test linter_report_files_over_length-1.0 \
     {Test that long files are reported.} \
     -setup $setup \
     -body {
-        return [linter_report_files_over_length $test_file 10]
+        set long_files {
+            tcl/a.tcl 200
+            tcl/b.tcl 345
+            tcl/c.tcl 265
+        }
+        linter_report_files_over_length $long_files
+        return 1
     } \
     -result 1
 
@@ -90,9 +96,20 @@ test linter_report_lines_over_length-1.0 \
     {Test long lines are reported for a given file.} \
     -setup $setup \
     -body {
-        return [linter_report_lines_over_length $test_file 90]
+        set long_lines {
+            tcl/a.tcl {
+                {line_no 1 line_length 100 line {test line}}
+            }
+            tcl/b.tcl {
+                {line_no 44 line_length 68 line {test line}}
+                {line_no 897 line_length 59 line {test line}}
+                {line_no 1053 line_length 94 line {test line}}
+            }
+        }
+        linter_report_lines_over_length $long_lines
+        return 1
     } \
-    -result 2
+    -result 1
 
 test linter_procs_without_filename_prefix-1.0 \
     {Get proc names not prefixed with the file name.} \
@@ -130,9 +147,14 @@ test linter_report_procs_without_filename_prefix-1.0 \
     {Test proc names not prefixed with the file name are reported.} \
     -setup $setup \
     -body {
-        return [linter_report_procs_without_filename_prefix $test_file]
+        set procs {
+            tcl/foo.tcl {foo {test1 test2 test3}}
+            tcl/bar.tcl {bar {proc1}}
+        }
+        linter_report_procs_without_filename_prefix $procs
+        return 1
     } \
-    -result 2
+    -result 1
 
 test linter_proc_names_parse-1.0 \
     {Test that proc names are parsed from a string.} \
@@ -401,7 +423,17 @@ test linter_report_procs_over_length-1.0 \
     {Test that procs with bodies over a specified number of lines are reported.} \
     -setup $setup \
     -body {
-        return [linter_report_procs_over_length $test_file 3]
+        set long_procs {
+            tcl/a.tcl {
+                proc1 567
+                proc2 789
+            }
+            tcl/b.tcl {
+                proc3 350
+            }
+        }
+        linter_report_procs_over_length $long_procs
+        return 1
     } \
     -result 1
 

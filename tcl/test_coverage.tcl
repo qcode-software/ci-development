@@ -316,20 +316,13 @@ proc test_coverage_procs_without_unit_tests {
 }
 
 proc test_coverage_report_procs_without_unit_tests {
-    tcl_files
-    test_files
+    procs_without_tests
 } {
     #| Report procs that do not have at least one unit test.
 
-    set procs [test_coverage_procs_without_unit_tests $tcl_files $test_files]
-    set count 0
-
-    dict for {filename procs} $procs {
+    dict for {filename procs} $procs_without_tests {
         foreach proc_name $procs {
             puts "The proc \"$proc_name\" in file $filename doesn't have a unit test."
-            incr count
         }
     }
-
-    return $count
 }

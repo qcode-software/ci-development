@@ -8,8 +8,9 @@ source $linter
 puts "Checking line length is under $max_line_length chars in files that have changed."
 
 set tcl_files [lmap x $files {file join $repository $x}]
-set count [linter_report_lines_over_length $tcl_files $max_line_length]
+set long_lines [linter_lines_over_length $tcl_files $max_line_length]
+linter_report_lines_over_length $long_lines
 
-if { $count > 0 } {
+if { [dict size $long_lines] > 0 } {
     exit 1
 }

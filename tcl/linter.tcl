@@ -32,20 +32,13 @@ proc linter_files_over_length {
 }
 
 proc linter_report_files_over_length {
-    files
-    max_file_length
+    files_over_length
 } {
     #| Report files that have more lines than max file length.
 
-    set long_files [linter_files_over_length $files $max_file_length]
-    set count 0
-
-    dict for {filename line_count} $long_files {
+    dict for {filename line_count} $files_over_length {
         puts "The file $filename has $line_count lines."
-        incr count
     }
-
-    return $count
 }
 
 proc linter_lines_over_length {
@@ -60,7 +53,6 @@ proc linter_lines_over_length {
         try {
             set handle [open $file r]
             set contents [read $handle]
-            set report [list]
             set line_no 1
 
             foreach line [split $contents "\n"] {
@@ -88,15 +80,11 @@ proc linter_lines_over_length {
 }
 
 proc linter_report_lines_over_length {
-    files
-    max_line_length
+    lines_over_length
 } {
     #| Report lines in the files that have more chars than max line length.
 
-    set long_lines [linter_lines_over_length $files $max_line_length]
-    set count 0
-
-    dict for {filename line_details} $long_lines {
+    dict for {filename line_details} $lines_over_length {
         foreach line_detail $line_details {
             set line_no [dict get $line_detail line_no]
             set line_length [dict get $line_detail line_length]
@@ -107,12 +95,8 @@ proc linter_report_lines_over_length {
             append output " - ${partial_line}..."
 
             puts $output
-
-            incr count
         }
     }
-
-    return $count
 }
 
 proc linter_procs_without_filename_prefix {files} {
@@ -151,24 +135,18 @@ proc linter_procs_without_filename_prefix {files} {
     return $procs
 }
 
-proc linter_report_procs_without_filename_prefix {files} {
+proc linter_report_procs_without_filename_prefix {procs_without_prefix} {
     #| Report procs that are not prefixed with the name of the file that they are in.
 
-    set procs [linter_procs_without_filename_prefix $files]
-    set count 0
-
-    dict for {filename prefix_procs} $procs {
+    dict for {filename prefix_procs} $procs_without_prefix {
         set prefix [lindex $prefix_procs 0]
         set proc_names [lindex $prefix_procs 1]
 
         foreach proc_name $proc_names {
             puts "The proc name \"$proc_name\" in file $filename is not prefixed\
                   with \"$prefix\"."
-            incr count
         }
     }
-
-    return $count
 }
 
 proc linter_proc_names_parse {string} {
@@ -280,21 +258,15 @@ proc linter_procs_over_length {
     return $long_procs
 }
 
-proc linter_report_procs_over_length {files max_proc_length} {
+proc linter_report_procs_over_length {procs_over_length} {
     #| Report procs that have a body line count over max proc length.
 
-    set long_procs [linter_procs_over_length $files $max_proc_length]
-    set count 0
-
-    dict for {filename procs} $long_procs {
+    dict for {filename procs} $procs_over_length {
         dict for {proc_name body_length} $procs {
             puts "The proc \"$proc_name\" in file $filename has a body that is\
                   $body_length lines long."
-            incr count
         }
     }
-
-    return $count
 }
 
 proc linter_proc_lengths {string} {

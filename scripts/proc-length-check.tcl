@@ -7,8 +7,9 @@ source $linter
 
 puts "Checking for procs that have bodies that are more than $max_lines lines long."
 set tcl_files [lmap x $files {file join $repository $x}]
-set count [linter_report_procs_over_length $tcl_files $max_lines]
+set long_procs [linter_procs_over_length $tcl_files $max_lines]
+linter_report_procs_over_length $long_procs
 
-if { $count > 0 } {
+if { [dict size $long_procs] > 0 } {
     exit 1
 }
