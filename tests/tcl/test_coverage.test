@@ -406,42 +406,21 @@ test test_coverage-1.0 \
     } \
     -result 1
 
-test test_coverage_procs_without_unit_tests-1.0 \
-    {Get procs that do not have unit tests.} \
-    -setup $setup \
-    -body {
-        set procs [test_coverage_procs_without_unit_tests $tcl_file $test_file]
-
-        if { [dict size $procs] != 1 } {
-            error "Expected 1 file but got [dict size $procs]."
-        }
-
-        if { [llength [lindex $procs 1]] != 1 } {
-            error "Expected 1 proc but got [llength [lindex $procs 1]]."
-        }
-
-        if { [file tail [lindex $procs 0]] != "coverage_test.tcl" } {
-            error "Expected coverage_test.tcl but got [file tail [lindex $procs 0]]."
-        }
-
-        if { [lindex [lindex $procs 1] 0] != "test_4" } {
-            error "Expected test_4 but got [lindex [lindex $procs 1] 0]."
-        }
-
-        return 1
-    } \
-    -result 1
-
 test test_coverage_report_procs_without_unit_tests-1.0 \
     {Test that procs that do not have unit tests are reported.} \
     -setup $setup \
     -body {
-        set procs {
-            tcl/a.tcl {proc1 proc2 proc3}
-            tcl/b.tcl {proc4 proc5}
-        }
-        test_coverage_report_procs_without_unit_tests $procs
-        return 1
+        set report [test_coverage_report_procs_without_unit_tests $tcl_file $test_file]
+
+        return [expr { [string length $report] > 0 }]
+    } \
+    -result 1
+
+test test_coverage_count_procs_without_unit_tests-1.0 \
+    {Count procs that do not have unit tests.} \
+    -setup $setup \
+    -body {
+        return [test_coverage_count_procs_without_unit_tests $tcl_file $test_file]
     } \
     -result 1
 

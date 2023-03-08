@@ -129,9 +129,8 @@ set test_files [fileutil::findByPattern $test_dir "*.test"]
 puts "Checking for files that are more than $file_length lines long."
 puts "---"
 
-set long_files [linter_files_over_length $tcl_files $file_length]
-linter_report_files_over_length $long_files
-set count [dict size $long_files]
+puts [linter_report_files_over_length $tcl_files $file_length]
+set count [linter_count_files_over_length $tcl_files $file_length]
 
 puts ""
 puts "$count files exceeding $file_length lines found."
@@ -143,12 +142,8 @@ puts ""
 puts "Checking line length is under $line_length characters."
 puts "---"
 
-set long_lines [linter_lines_over_length $tcl_files $line_length]
-linter_report_lines_over_length $long_lines
-set count 0
-foreach value [dict values $long_lines] {
-    incr count [llength $value]
-}
+puts [linter_report_lines_over_length $tcl_files $line_length]
+set count [linter_count_lines_over_length $tcl_files $line_length]
 
 puts ""
 puts "$count lines exceeding $line_length characters found."
@@ -160,12 +155,8 @@ puts ""
 puts "Checking for procs that have bodies that are more than $proc_length lines long."
 puts "---"
 
-set long_procs [linter_procs_over_length $tcl_files $proc_length]
-linter_report_procs_over_length $long_procs
-set count 0
-foreach value [dict values $long_procs] {
-    incr count [dict size $value]
-}
+puts [linter_report_procs_over_length $tcl_files $proc_length]
+set count [linter_count_procs_over_length $tcl_files $proc_length]
 
 puts ""
 puts "$count procs with bodies exceeding $proc_length lines found."
@@ -177,12 +168,8 @@ puts ""
 puts "Checking for proc names that are not prefixed with the file name."
 puts "---"
 
-set procs_without_prefix [linter_procs_without_filename_prefix $tcl_files]
-linter_report_procs_without_filename_prefix $procs_without_prefix
-set count 0
-foreach value [dict values $procs_without_prefix] {
-    incr count [llength [lindex $value 1]]
-}
+puts [linter_report_procs_without_filename_prefix $tcl_files]
+set count [linter_count_procs_without_filename_prefix $tcl_files]
 
 puts ""
 puts "$count procs without file name as a prefix found."
@@ -194,12 +181,8 @@ puts ""
 puts "Checking for procs that do not have at least one unit test."
 puts "---"
 
-set procs_without_tests [test_coverage_procs_without_unit_tests $tcl_files $test_files]
-test_coverage_report_procs_without_unit_tests $procs_without_tests
-set count 0
-foreach value [dict values $procs_without_tests] {
-    incr count [llength $value]
-}
+puts [test_coverage_report_procs_without_unit_tests $tcl_files $test_files]
+set count [test_coverage_count_procs_without_unit_tests $tcl_files $test_files]
 
 puts ""
 puts "$count procs that do not have a unit test found."

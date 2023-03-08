@@ -10,9 +10,9 @@ puts "Checking for procs that do not have at least one unit test."
 
 set test_files [fileutil::findByPattern "${repository}/$test_dir" "*.test"]
 set tcl_files [lmap x $files {file join $repository $x}]
-set procs_without_tests [test_coverage_procs_without_unit_tests $tcl_files $test_files]
-test_coverage_report_procs_without_unit_tests $procs_without_tests
+puts [test_coverage_report_procs_without_unit_tests $tcl_files $test_files]
+set count [test_coverage_count_procs_without_unit_tests $tcl_files $test_files]
 
-if { [dict size $procs_without_tests] > 0 } {
+if { $count > 0 } {
     exit 1
 }
