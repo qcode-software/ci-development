@@ -40,7 +40,7 @@ proc linter_count_files_over_length {
     files
     max_file_length
 } {
-    #| Report files that have more lines than max file length.
+    #| Count the number of files that have more lines than max file length.
 
     set count 0
 
