@@ -365,7 +365,7 @@ proc linter_report_procs_without_proc_comment {files} {
 }
 
 proc linter_count_procs_without_proc_comment {files} {
-    #| Report procs that do not have a comment at the beginning of the body.
+    #| Count the number of procs without a description at the beginning of the body.
 
     set count 0
 
