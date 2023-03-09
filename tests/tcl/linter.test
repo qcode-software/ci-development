@@ -339,15 +339,31 @@ test linter_procs_first_line-1.0 \
             proc test_2 {args} {
                 return 2
             }
+
+            namespace eval test {
+                namespace export test_3
+                namespace ensemble create
+
+                proc test_3 {args} {
+                    #| Test 3 proc.
+                    return 3
+                }
+
+                proc test_4 {args} {
+                    return 4
+                }
+            }
         }]
 
-        if { [dict size $proc_lines] > 2 } {
-            error "Expected 2 procs but got [dict size $proc_lines]."
+        if { [dict size $proc_lines] != 4 } {
+            error "Expected 4 procs but got [dict size $proc_lines]."
         }
 
         set expected [dict create \
                           test_1 {#| Test 1 proc.}\
-                          test_2 {return 2}]
+                          test_2 {return 2} \
+                          test_3 {#| Test 3 proc.} \
+                          test_4 {return 4}]
 
         dict for {proc_name line} $proc_lines {
             if { ![dict exists $expected $proc_name] } {
