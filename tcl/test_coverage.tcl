@@ -279,3 +279,66 @@ proc test_coverage {tcl_dir test_dir} {
 
     return $data
 }
+
+proc test_coverage_report_procs_without_unit_tests {
+    tcl_files
+    test_files
+} {
+    #| Report procs that do not have any unit tests.
+
+    set file_procs [dict create]
+    set file_tests [dict create]
+
+    foreach file $tcl_files {
+        dict set file_procs $file [test_coverage_proc_names_get $file]
+    }
+
+    foreach test_file $test_files {
+        dict set file_tests $test_file [test_coverage_test_names_get $test_file]
+    }
+
+    set map [test_coverage_procs_tests_map $file_procs $file_tests]
+    set report [list]
+
+    dict for {filename procs_tests} $map {
+        dict for {proc_name tests} $procs_tests {
+            if { [dict size $tests] == 0 } {
+                lappend report "The proc \"$proc_name\" in file $filename doesn't have a\
+                                unit test."
+            }
+        }
+    }
+
+    return [join $report "\n"]
+}
+
+proc test_coverage_count_procs_without_unit_tests {
+    tcl_files
+    test_files
+} {
+    #| Count the number of procs that do not have any unit tests.
+
+    set file_procs [dict create]
+    set file_tests [dict create]
+
+    foreach file $tcl_files {
+        dict set file_procs $file [test_coverage_proc_names_get $file]
+    }
+
+    foreach test_file $test_files {
+        dict set file_tests $test_file [test_coverage_test_names_get $test_file]
+    }
+
+    set map [test_coverage_procs_tests_map $file_procs $file_tests]
+    set count 0
+
+    dict for {filename procs_tests} $map {
+        dict for {proc_name tests} $procs_tests {
+            if { [dict size $tests] == 0 } {
+                incr count
+            }
+        }
+    }
+
+    return $count
+}

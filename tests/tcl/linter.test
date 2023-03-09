@@ -13,13 +13,49 @@ set setup {
     set test_file "~/ci-development/tests/tcl/files/linter_test.tcl"
 }
 
+test linter_cat-1.0 \
+    {Get the contets of a file.} \
+    -setup $setup \
+    -body {
+        set contents [linter_cat $test_file]
+
+        return [expr { [string length $contents] > 0 }]
+    } \
+    -result 1
+
+test linter_report_files_over_length-1.0 \
+    {Test that long files are reported.} \
+    -setup $setup \
+    -body {
+        set report [linter_report_files_over_length [list $test_file] 1]
+
+        return [expr { [string length $report] > 0 }]
+    } \
+    -result 1
+
+test linter_count_files_over_length-1.0 \
+    {Count files over a given number of lines.} \
+    -setup $setup \
+    -body {
+        return [linter_count_files_over_length [list $test_file] 1]
+    } \
+    -result 1
+
 test linter_report_lines_over_length-1.0 \
     {Test long lines are reported for a given file.} \
     -setup $setup \
     -body {
-        set lines [linter_report_lines_over_length $test_file 90]
+        set report [linter_report_lines_over_length [list $test_file] 90]
 
-        return [llength $lines]
+        return [expr { [string length $report] > 0 }]
+    } \
+    -result 1
+
+test linter_count_lines_over_length-1.0 \
+    {Count the lines over a given length.} \
+    -setup $setup \
+    -body {
+        return [linter_count_lines_over_length [list $test_file] 90]
     } \
     -result 2
 
@@ -27,9 +63,17 @@ test linter_report_procs_without_filename_prefix-1.0 \
     {Test proc names not prefixed with the file name are reported.} \
     -setup $setup \
     -body {
-        set procs [linter_report_procs_without_filename_prefix $test_file]
+        set report [linter_report_procs_without_filename_prefix [list $test_file]]
 
-        return [llength $procs]
+        return [expr { [string length $report] > 0 }]
+    } \
+    -result 1
+
+test linter_count_procs_without_filename_prefix-1.0 \
+    {Count procs not prefixed with the file name.} \
+    -setup $setup \
+    -body {
+        return [linter_count_procs_without_filename_prefix [list $test_file]]
     } \
     -result 2
 
@@ -265,12 +309,22 @@ test linter_proc_lengths-1.0 \
     } \
     -result {test_1 2 test_2 4 test_3 3 test_4 1 test_5 1 test_6 9}
 
-test linter_file_proc_lengths-1.0 \
-    {Get body length of procs in a file.} \
+test linter_report_procs_over_length-1.0 \
+    {Test that procs with bodies over a specified number of lines are reported.} \
     -setup $setup \
     -body {
-        return [linter_file_proc_lengths $test_file] 
+        set report [linter_report_procs_over_length [list $test_file] 3]
+
+        return [expr { [string length $report] > 0 }]
     } \
-    -result {this_is_a_long_proc_name_for_testing 5 linter_test 3 linter_test_two 3 does_not_start_with_linter_test 3}
+    -result 1
+
+test linter_count_procs_over_length-1.0 \
+    {Count procs with bodies over a specified number of lines.} \
+    -setup $setup \
+    -body {
+        return [linter_count_procs_over_length [list $test_file] 3]
+    } \
+    -result 1
 
 cleanupTests
