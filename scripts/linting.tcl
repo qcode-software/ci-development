@@ -198,4 +198,4 @@ puts [linter_report_procs_without_proc_comment $tcl_files]
 set count [linter_count_procs_without_proc_comment $tcl_files]
 
 puts ""
-puts "$count procs that do not have a #| comment."
+puts "$count procs that do not have a #| comment found."
