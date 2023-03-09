@@ -4,7 +4,7 @@ set files [lrange $argv 2 end]
 
 source $linter
 
-puts "Checking procs begin with a #| comment in files that have changed."
+puts "Checking procs have a #| comment in files that have changed."
 
 set tcl_files [lmap x $files {file join $repository $x}]
 puts [linter_report_procs_without_proc_comment $tcl_files]

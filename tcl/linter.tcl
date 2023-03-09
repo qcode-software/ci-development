@@ -321,43 +321,43 @@ proc linter_sql_query_indices {string} {
     return [regexp -all -inline -indices $pattern $string]
 }
 
-proc linter_procs_first_line {string} {
-    #| Get the first line of the body of each proc in the string.
+proc linter_procs_without_proc_comment {string} {
+    #| Get a list procs that don't have a proc comment.
 
-    set proc_lines [dict create]
+    set procs [list]
     set commands [linter_tcl_commands $string]
 
     foreach command $commands {
         switch -regexp $command {
             {^proc} {
-                set proc_name [lindex $command 1]
-                set body_lines [split [string trim [lindex $command 3]] "\n"]
-                dict set proc_lines $proc_name [lindex $body_lines 0]
+                lassign $command proc proc_name args body
+                set body_lines [split [string trim $body] "\n"]
+
+                if { [lsearch -regexp $body_lines {^#\|}] == -1 } {
+                    lappend procs $proc_name
+                }
             }
-            {^namespace eval} {
-                set proc_lines [dict merge \
-                                    $proc_lines \
-                                    [linter_procs_first_line [lindex $command 3]]]
+            {^namespace} {
+                lassign $command namespace subcommand name body
+
+                if { $subcommand eq "eval" } {
+                    lappend procs {*}[linter_procs_without_proc_comment $body]
+                }
             }
         }
     }
 
-    return $proc_lines
+    return $procs
 }
 
 proc linter_report_procs_without_proc_comment {files} {
-    #| Report procs without a description at the beginning of the body.
+    #| Report procs that don't have a proc comment.
 
     set report [list]
 
     foreach file $files {
-        set proc_lines [linter_procs_first_line [linter_cat $file]]
-
-        dict for {proc_name line} $proc_lines {
-            if { ![regexp {^#\|.*} $line] } {
-                lappend report "The proc $proc_name in file $file does not begin with a\
-                                #| comment."
-            }
+        foreach proc_name [linter_procs_without_proc_comment [linter_cat $file]] {
+            lappend report "The proc $proc_name in file $file does not have a #| comment."
         }
     }
 
@@ -365,18 +365,13 @@ proc linter_report_procs_without_proc_comment {files} {
 }
 
 proc linter_count_procs_without_proc_comment {files} {
-    #| Count the number of procs without a description at the beginning of the body.
+    #| Count the number of procs that don't have a proc comment.
 
     set count 0
 
     foreach file $files {
-        set proc_lines [linter_procs_first_line [linter_cat $file]]
-
-        dict for {proc_name line} $proc_lines {
-            if { ![regexp {^#\|.*} $line] } {
-                incr count
-            }
-        }
+        set procs [linter_procs_without_proc_comment [linter_cat $file]]
+        incr count [llength $procs]
     }
 
     return $count

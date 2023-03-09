@@ -44,7 +44,7 @@ on:
         required: false
         type: boolean
       check_proc_comments:
-        description: 'Flag for checking procs begin with a #| comment.'
+        description: 'Flag for checking that procs have a #| comment.'
         default: true
         required: false
         type: boolean
