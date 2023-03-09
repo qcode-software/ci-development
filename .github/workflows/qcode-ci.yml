@@ -155,7 +155,7 @@ jobs:
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
 
-      - name: Check Procs Have #| Comments
+      - name: 'Check Procs Have #| Comments'
         if: >
           always()
           && steps.changed-files.outcome == 'success'
