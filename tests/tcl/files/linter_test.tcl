@@ -23,3 +23,7 @@ proc does_not_start_with_linter_test {args} {
 
     return "Hello World"
 }
+
+proc linter_test_no_comment {args} {
+    return "Hello World"
+}

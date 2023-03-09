@@ -327,4 +327,56 @@ test linter_count_procs_over_length-1.0 \
     } \
     -result 1
 
+test linter_procs_first_line-1.0 \
+    {Test that procs without a #| comment are reported.} \
+    -body {
+        set proc_lines [linter_procs_first_line {
+            proc test_1 {args} {
+                #| Test 1 proc.
+                return 1
+            }
+
+            proc test_2 {args} {
+                return 2
+            }
+        }]
+
+        if { [dict size $proc_lines] > 2 } {
+            error "Expected 2 procs but got [dict size $proc_lines]."
+        }
+
+        set expected [dict create \
+                          test_1 {#| Test 1 proc.}\
+                          test_2 {return 2}]
+
+        dict for {proc_name line} $proc_lines {
+            if { ![dict exists $expected $proc_name] } {
+                error "Proc \"$proc_name\" not expected."
+            } elseif { $line ne [dict get $expected $proc_name] } {
+                error "Expected \"[dict get $expected $proc_name]\" but got \"$line\"."
+            }
+        }
+
+        return 1
+    } \
+    -result 1
+
+test linter_report_procs_without_proc_comment-1.0 \
+    {Test that procs without a #| comment are reported.} \
+    -setup $setup \
+    -body {
+        set report [linter_report_procs_without_proc_comment [list $test_file]]
+
+        return [expr { [string length $report] > 0 }]
+    } \
+    -result 1
+
+test linter_count_procs_without_proc_comment-1.0 \
+    {Count procs with bodies over a specified number of lines.} \
+    -setup $setup \
+    -body {
+        return [linter_count_procs_without_proc_comment [list $test_file]]
+    } \
+    -result 1
+
 cleanupTests

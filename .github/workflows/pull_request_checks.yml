@@ -22,4 +22,5 @@ jobs:
       check_procs_have_unit_tests: true
       check_file_lengths: true
       check_proc_lengths: true
+      check_proc_comments: true
     secrets: inherit

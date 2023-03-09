@@ -320,3 +320,64 @@ proc linter_sql_query_indices {string} {
 
     return [regexp -all -inline -indices $pattern $string]
 }
+
+proc linter_procs_first_line {string} {
+    #| Get the first line of the body of each proc in the string.
+
+    set proc_lines [dict create]
+    set commands [linter_tcl_commands $string]
+
+    foreach command $commands {
+        switch -regexp $command {
+            {^proc} {
+                set proc_name [lindex $command 1]
+                set body_lines [split [string trim [lindex $command 3]] "\n"]
+                dict set proc_lines $proc_name [lindex $body_lines 0]
+            }
+            {^namespace eval} {
+                set proc_lines [dict merge \
+                                    $proc_lines \
+                                    [linter_procs_first_line [lindex $command 3]]]
+            }
+        }
+    }
+
+    return $proc_lines
+}
+
+proc linter_report_procs_without_proc_comment {files} {
+    #| Report procs without a description at the beginning of the body.
+
+    set report [list]
+
+    foreach file $files {
+        set proc_lines [linter_procs_first_line [linter_cat $file]]
+
+        dict for {proc_name line} $proc_lines {
+            if { ![regexp {^#\|.*} $line] } {
+                lappend report "The proc $proc_name in file $file does not begin with a\
+                                #| comment."
+            }
+        }
+    }
+
+    return [join $report "\n"]
+}
+
+proc linter_count_procs_without_proc_comment {files} {
+    #| Report procs that do not have a comment at the beginning of the body.
+
+    set count 0
+
+    foreach file $files {
+        set proc_lines [linter_procs_first_line [linter_cat $file]]
+
+        dict for {proc_name line} $proc_lines {
+            if { ![regexp {^#\|.*} $line] } {
+                incr count
+            }
+        }
+    }
+
+    return $count
+}
