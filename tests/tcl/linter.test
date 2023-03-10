@@ -327,4 +327,67 @@ test linter_count_procs_over_length-1.0 \
     } \
     -result 1
 
+test linter_procs_without_proc_comment-1.0 \
+    {Get procs that don't have a proc comment.} \
+    -body {
+        set procs [linter_procs_without_proc_comment {
+            proc test_1 {args} {
+
+                #| Test 1 proc.
+                return 1
+            }
+
+            proc test_2 {args} {
+                return 2
+            }
+
+            namespace eval test {
+                namespace export test_3
+                namespace ensemble create
+
+                proc test_3 {args} {
+                    #| Test 3 proc.
+                    return 3
+                }
+
+                proc test_4 {args} {
+                    return 4
+                }
+            }
+        }]
+
+        if { [llength $procs] != 2 } {
+            error "Expected 2 procs but got [llength $procs]: $procs."
+        }
+
+        if { "test_2" ni $procs } {
+            error "Proc test_2 not found."
+        }
+
+        if { "test_4" ni $procs } {
+            error "Proc test_4 not found."
+        }
+
+        return 1
+    } \
+    -result 1
+
+test linter_report_procs_without_proc_comment-1.0 \
+    {Report procs without a proc comment.} \
+    -setup $setup \
+    -body {
+        set report [linter_report_procs_without_proc_comment [list $test_file]]
+
+        return [expr { [string length $report] > 0 }]
+    } \
+    -result 1
+
+test linter_count_procs_without_proc_comment-1.0 \
+    {Count procs that don't have a proc comment.} \
+    -setup $setup \
+    -body {
+        return [linter_count_procs_without_proc_comment [list $test_file]]
+    } \
+    -result 1
+
 cleanupTests

@@ -139,7 +139,7 @@ puts "$count files exceeding $file_length lines found."
 puts ""
 puts "--------------------------------------------------"
 puts ""
-puts "Checking line length is under $line_length characters."
+puts "Checking for lines longer than $line_length characters."
 puts "---"
 
 puts [linter_report_lines_over_length $tcl_files $line_length]
@@ -186,3 +186,16 @@ set count [test_coverage_count_procs_without_unit_tests $tcl_files $test_files]
 
 puts ""
 puts "$count procs that do not have a unit test found."
+
+# Report procs without a #| comment.
+puts ""
+puts "--------------------------------------------------"
+puts ""
+puts "Checking for procs that do not have a #| comment."
+puts "---"
+
+puts [linter_report_procs_without_proc_comment $tcl_files]
+set count [linter_count_procs_without_proc_comment $tcl_files]
+
+puts ""
+puts "$count procs that do not have a #| comment found."
