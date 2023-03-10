@@ -328,21 +328,20 @@ proc linter_procs_without_proc_comment {string} {
     set commands [linter_tcl_commands $string]
 
     foreach command $commands {
-        switch -regexp $command {
-            {^proc} {
-                lassign $command proc proc_name args body
-                set body_lines [split [string trim $body] "\n"]
+        set command_name [lindex $command 0]
 
-                if { [lsearch -regexp $body_lines {^#\|}] == -1 } {
-                    lappend procs $proc_name
-                }
+        if { $command_name eq "proc" } {
+            lassign $command command_name proc_name args body
+            set body_lines [split [string trim $body] "\n"]
+
+            if { [lsearch -regexp $body_lines {^#\|}] == -1 } {
+                lappend procs $proc_name
             }
-            {^namespace} {
-                lassign $command namespace subcommand name body
+        } elseif { $command_name eq "namespace" } {
+            lassign $command command_name subcommand namespace body
 
-                if { $subcommand eq "eval" } {
-                    lappend procs {*}[linter_procs_without_proc_comment $body]
-                }
+            if { $subcommand eq "eval" } {
+                lappend procs {*}[linter_procs_without_proc_comment $body]
             }
         }
     }
