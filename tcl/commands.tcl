@@ -56,12 +56,12 @@ proc commands_parse {string} {
             # E.g. proc body, foreach body, dict for body, while body, and
             #      user-defined commands like qc::db_0or1row
             if { $command_name eq "proc" } {
-                set parsed_args [command_args_parse [lrange $words 1 end-1]]
+                set parsed_args [command_args_tokens_parse [lrange $words 1 end-1]]
                 lappend parsed_args \
-                    script [command_commands_parse [string range [lindex $words end] 1 end-1]]
+                    script [commands_parse [string range [lindex $words end] 1 end-1]]
                 lappend command $parsed_args
             } elseif { [llength $words] > 1 } {
-                lappend command [args_parse [lrange $words 1 end]]
+                lappend command [command_args_tokens_parse [lrange $words 1 end]]
             }
         }
 
