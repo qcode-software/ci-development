@@ -45,33 +45,33 @@ proc commands_parse {string} {
     foreach command [commands $flattened] {
 
         if { [string index [string trim $command] 0] eq "#" } {
-            set command [list comment [string trimleft $command]]
+            lappend commands comment [string trimleft $command]
         } else {
             set words [words $command]
             set command_name [string trimleft [lindex $words 0] " "]
-            set command [list command $command_name]
+            set command_parts [list]
 
             # TODO parse commands according to a schema/config that gives
             # context about what to parse further.
             # E.g. proc body, foreach body, dict for body, while body, and
             #      user-defined commands like qc::db_0or1row
             if { $command_name eq "proc" } {
-                set parsed_args [command_args_tokens_parse [lrange $words 1 end-1]]
+                set parsed_args [command_tokens_parse [lrange $words 0 end-1]]
                 lappend parsed_args \
                     script [commands_parse [string range [lindex $words end] 1 end-1]]
-                lappend command $parsed_args
+                lappend command_parts $parsed_args
             } elseif { [llength $words] > 1 } {
-                lappend command [command_args_tokens_parse [lrange $words 1 end]]
+                lappend command_parts [command_tokens_parse $words]
             }
-        }
 
-        lappend commands $command
+            lappend commands command {*}$command_parts
+        }
     }
 
     return $commands
 }
 
-proc command_args_tokens_parse {words} {
+proc command_tokens_parse {words} {
     #| Parse the tokens from the command arg words.
     set parsed_args [list]
 
@@ -99,6 +99,63 @@ proc command_args_tokens_parse {words} {
     }
 
     return $parsed_args
+}
+
+proc commands_rebuild {list {indent_level 0}} {
+    #| Rebuild commands from the structured list into Tcl commands.
+    set count 1
+    set indent [string repeat " " [expr {$indent_level * 4}]]
+
+    foreach {type value} $list {
+        if { $count > 1 } {
+            append rebuilt \n
+        }
+
+        if { $type eq "comment" } {
+            append rebuilt "${indent}${value}"
+        } elseif { $type eq "command" } {
+
+            set part_count 1
+
+            foreach {part_type part_value} $value {
+                if { $part_count > 1 } {
+                    append rebuilt " "
+                } else {
+                    append rebuilt $indent
+                }
+
+                switch $part_type {
+                    bareword -
+                    string_quoted -
+                    string_braced -
+                    variable {
+                        append rebuilt $part_value
+                    }
+                    command {
+                        set command [commands_rebuild [list command $part_value]]
+                        append rebuilt "\[$command\]"
+                    }
+                    script {
+                        set body [commands_rebuild \
+                                      $part_value \
+                                      [expr {$indent_level + 1}]]
+                        append rebuilt "\{\n$body\n\}"
+                    }
+                    default {
+                        "Unrecognised type \"$type\""
+                    }
+                }
+
+                incr part_count
+            }
+        } else {
+            error "Unrecognised command \"$type\""
+        }
+
+        incr count
+    }
+
+    return $rebuilt
 }
 
 
