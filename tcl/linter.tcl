@@ -224,6 +224,44 @@ proc linter_tcl_commands {script} {
     return $commands
 }
 
+proc linter_tcl_command_words {command} {
+    #| Get the Tcl words that make up the command.
+    #|
+    #| Original author: PYK.
+    #| https://wiki.tcl-lang.org/page/cmdSplit
+
+    if {![info complete $command]} {
+        error [list {not a complete command} $command]
+    }
+
+    set words {}
+    set logical {}
+    set command [string trimleft $command[set command {}] "\f\n\r\t\v " ]
+
+    while {[regexp {([^\f\n\r\t\v ]*)([\f\n\r\t\v ]+)(.*)} $command full first delim last]} {
+        append logical $first
+
+        if {[info complete $logical\n]} {
+            lappend words $logical
+            set logical {}
+        } else {
+            append logical $delim
+        }
+
+        set command $last[set last {}]
+    }
+
+    if {$command ne {}} {
+        append logical $command
+    }
+
+    if {$logical ne {}} {
+        lappend words $logical
+    }
+
+    return $words
+}
+
 proc linter_report_procs_over_length {
     files
     max_proc_length
@@ -275,21 +313,33 @@ proc linter_proc_lengths {string} {
     set proc_lengths [dict create]
 
     foreach command $commands {
-        switch -regexp $command {
-            {^proc} {
-                set proc_name [lindex $command 1]
-                set proc_body [lindex $command 3]
-                set body_length [llength [split [string trim $proc_body] "\n"]]
-                set query_count [llength [linter_sql_query_indices $proc_body]]
-                set query_length [linter_sql_queries_length $proc_body]
-                set body_length [expr {$body_length - $query_length + $query_count}]
+        set words [linter_tcl_command_words $command]
+        set command_name [lindex $words 0]
 
-                dict set proc_lengths $proc_name $body_length
-            }
-            {^namespace eval} {
+        if { $command_name eq "proc" } {
+            lassign $words \
+                command_name \
+                proc_name \
+                proc_args \
+                proc_body
+            set proc_body [join $proc_body]
+            set body_length [llength [split [string trim $proc_body] "\n"]]
+            set query_count [llength [linter_sql_query_indices $proc_body]]
+            set query_length [linter_sql_queries_length $proc_body]
+            set body_length [expr {$body_length - $query_length + $query_count}]
+
+            dict set proc_lengths $proc_name $body_length
+        } elseif { $command_name eq "namespace" } {
+            lassign $words \
+                command_name \
+                subcommand \
+                name \
+                body
+
+            if { $subcommand eq "eval" } {
                 set proc_lengths [dict merge \
                                       $proc_lengths \
-                                      [linter_proc_lengths [lindex $command 3]]]
+                                      [linter_proc_lengths [join $body]]]
             }
         }
     }
@@ -328,20 +378,29 @@ proc linter_procs_without_proc_comment {string} {
     set commands [linter_tcl_commands $string]
 
     foreach command $commands {
-        set command_name [lindex $command 0]
+        set words [linter_tcl_command_words $command]
+        set command_name [lindex $words 0]
 
         if { $command_name eq "proc" } {
-            lassign $command command_name proc_name args body
-            set body_lines [split [string trim $body] "\n"]
+            lassign $words \
+                command_name \
+                proc_name \
+                args \
+                body
+            set body_lines [split [string trim [join $body]] "\n"]
 
             if { [lsearch -regexp $body_lines {^#\|}] == -1 } {
                 lappend procs $proc_name
             }
         } elseif { $command_name eq "namespace" } {
-            lassign $command command_name subcommand namespace body
+            lassign $words \
+                command_name \
+                subcommand \
+                namespace \
+                body
 
             if { $subcommand eq "eval" } {
-                lappend procs {*}[linter_procs_without_proc_comment $body]
+                lappend procs {*}[linter_procs_without_proc_comment [join $body]]
             }
         }
     }
