@@ -237,8 +237,9 @@ proc linter_tcl_command_words {command} {
     set words {}
     set logical {}
     set command [string trimleft $command[set command {}] "\f\n\r\t\v " ]
+    set pattern {([^\f\n\r\t\v ]*)([\f\n\r\t\v ]+)(.*)}
 
-    while {[regexp {([^\f\n\r\t\v ]*)([\f\n\r\t\v ]+)(.*)} $command full first delim last]} {
+    while {[regexp $pattern $command full first delim last]} {
         append logical $first
 
         if {[info complete $logical\n]} {
