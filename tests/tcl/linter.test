@@ -152,6 +152,44 @@ test linter_tcl_commands-1.0 \
     } \
     -result 1
 
+test linter_tcl_command_words-1.0 \
+    {Get the Tcl words from a simple Tcl command.} \
+    -setup $setup \
+    -body {
+        set script {set foo "bar"}
+        set commands [linter_tcl_commands $script]
+        set words [linter_tcl_command_words [lindex $commands 0]]
+
+        if { $words ne {set foo {"bar"}} } {
+            error "Expected {set foo \{\"bar\"\}} but got $words"
+        }
+
+        return 1
+    } \
+    -result 1
+
+test linter_tcl_command_words-2.0 \
+    {Get the Tcl words from a proc.} \
+    -setup $setup \
+    -body {
+        set script {
+            proc test_1 {args} {
+                # This is a test proc.
+                return 1
+            }
+        }
+
+        set commands [linter_tcl_commands $script]
+        set words [linter_tcl_command_words [lindex $commands 0]]
+
+        if { [llength $words] != 4 } {
+            error "Expected 4 words but got [llength $words]"
+        }
+
+        return 1
+    } \
+    -result 1
+
 test linter_sql_query_indices-1.0 \
     {Get the indices of queries in a string.} \
     -setup $setup \
