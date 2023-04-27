@@ -59,6 +59,30 @@ test linter_count_lines_over_length-1.0 \
     } \
     -result 2
 
+test linter_binary_numbers-1.0 \
+    {Get binary numbers.} \
+    -setup $setup \
+    -body {
+        return [linter_binary_numbers 3]
+    } \
+    -result {000 100 010 110 001 101 011 111}
+
+test linter_proc_name_prefixes_from_filename-1.0 \
+    {Get proc name prefixes from a filename.} \
+    -setup $setup \
+    -body {
+        return [linter_proc_name_prefixes_from_filename "test"]
+    } \
+    -result {test}
+
+test linter_proc_name_prefixes_from_filename-1.1 \
+    {Get proc name prefixes from a filename.} \
+    -setup $setup \
+    -body {
+        return [linter_proc_name_prefixes_from_filename "test_file_name"]
+    } \
+    -result {test_file_name test::file_name test_file::name test::file::name}
+
 test linter_report_procs_without_filename_prefix-1.0 \
     {Test proc names not prefixed with the file name are reported.} \
     -setup $setup \
@@ -102,8 +126,8 @@ test linter_proc_names_parse-1.0 \
                       [llength $proc_names] == 4
                       && "proc_names_test_1" in $proc_names
                       && "proc_names_test_2" in $proc_names
-                      && "proc_names_test_3" in $proc_names
-                      && "proc_names_test_4" in $proc_names
+                      && "testing::proc_names_test_3" in $proc_names
+                      && "testing::names::proc_names_test_4" in $proc_names
                   }]
     } \
     -result 1

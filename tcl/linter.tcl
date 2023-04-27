@@ -105,30 +105,20 @@ proc linter_count_lines_over_length {
     return $count
 }
 
-proc linter_boolean_table {length} {
-    #| Returns a boolean table where number of columns matches length.
+proc linter_binary_numbers {bits} {
+    #| Returns all binary numbers from 0 to the maximum represented by the
+    #| number of bits (2^$bits).
 
-    if { $length == 0 } {
-        return [list]
+    set max [expr {pow(2,$bits)}]
+    set values [list]
+
+    for {set i 0} {$i < $max} {incr i} {
+        binary scan $i "b${bits}" value
+        lappend values $value
     }
 
-    if { $length == 1 } {
-        return [list \
-                    [list 0] \
-                    [list 1]]
-    }
-
-    set ones [list]
-    set zeroes [list]
-
-    foreach row [boolean_table [expr {$length - 1}]] {
-        lappend zeroes [concat 0 $row]
-        lappend ones [concat 1 $row]
-    }
-
-    return [concat $zeroes $ones]
+    return $values
 }
-
 
 proc linter_proc_name_prefixes_from_filename {filename} {
     #| Generate unique proc name prefixes from the filename.
@@ -138,7 +128,7 @@ proc linter_proc_name_prefixes_from_filename {filename} {
     #| The list of strings returned contains all combinations of literal underscores
     #| and double colon replacements.
 
-    set matches [regexp -all -indices -inline -- {[^\_](\_)[^\_]} $filename]
+    set matches [regexp -all -indices -inline -- {(_)} $filename]
 
     if { [llength $matches] == 0 } {
         return $filename
@@ -150,15 +140,18 @@ proc linter_proc_name_prefixes_from_filename {filename} {
         lappend indices [lindex $underscore_indices 0]
     }
 
-    set boolean_table [boolean_table [llength $indices]]
+    set arrangements [linter_binary_numbers [llength $indices]]
     set prefixes [list]
 
-    foreach row $boolean_table {
+    foreach arrangement $arrangements {
         set prefix $filename
         set offset 0
 
-        foreach index $indices element $row {
+        foreach index $indices element [split $arrangement {}] {
             if { $element == 1 } {
+                # 1 character is being replaced by 2 ('_' for '::') therefore
+                # need to offset the index of the character to be replaced by 1
+                # for each replacement.
                 incr index $offset
                 set prefix [string replace $prefix $index $index "::"]
                 incr offset
@@ -178,22 +171,17 @@ proc linter_report_procs_without_filename_prefix {files} {
 
     foreach file $files {
         set contents [linter_cat $file]
-        set length [string length [file extension $file]]
-        set filename [string range [file tail $file] 0 end-$length]
+        set extension_length [string length [file extension $file]]
+        set filename [string range [file tail $file] 0 end-$extension_length]
         set prefixes [linter_proc_name_prefixes_from_filename $filename]
-        set proc_name_pattern {([a-z0-9_-]+::)*}
+        set prefixes_pattern [join $prefixes "|"]
+        set proc_name_pattern {^([a-z0-9_-]+::)*($prefixes_pattern)(.*|$)}
+        set proc_name_pattern [subst -nocommand -nobackslashes $proc_name_pattern]
 
         foreach proc_name [linter_proc_names_parse $contents] {
-            set namespaced_prefix [string map [list _ ::] $filename]
-            set proc_name_parts [string map [list :: " "] $proc_name]
-            set proc_name_no_namespaces [lindex $proc_name_parts end]
-            set proc_name_namespaces [lrange $proc_name_parts 0 end-1]
-
-            if { ![string match "${filename}*" $proc_name]
-                 || ![string match "${filename}*" $proc_name_no_namespaces]
-                 || ![string match "${namespaced_prefix}*" $proc_name] } {
+            if { ![regexp $proc_name_pattern $proc_name] } {
                 lappend report "The proc name \"$proc_name\" in file $file is not\
-                                prefixed with \"$prefix\"."
+                                prefixed with a variation of the filename \"$filename\"."
             }
         }
     }
@@ -209,11 +197,15 @@ proc linter_count_procs_without_filename_prefix {files} {
 
     foreach file $files {
         set contents [linter_cat $file]
-        set length [string length [file extension $file]]
-        set prefix [string range [file tail $file] 0 end-$length]
+        set extension_length [string length [file extension $file]]
+        set filename [string range [file tail $file] 0 end-$extension_length]
+        set prefixes [linter_proc_name_prefixes_from_filename $filename]
+        set prefixes_pattern [join $prefixes "|"]
+        set proc_name_pattern {^([a-z0-9_-]+::)*($prefixes_pattern)(.*|$)}
+        set proc_name_pattern [subst -nocommand -nobackslashes $proc_name_pattern]
 
         foreach proc_name [linter_proc_names_parse $contents] {
-            if { ![string match "${prefix}*" $proc_name] } {
+            if { ![regexp $proc_name_pattern $proc_name] } {
                 incr count
             }
         }

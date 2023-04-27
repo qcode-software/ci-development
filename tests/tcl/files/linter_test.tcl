@@ -12,7 +12,7 @@ proc linter_test {args} {
     return "Hello World"
 }
 
-proc linter_test_two {args} {
+proc ::linter_test_two {args} {
     #| Test proc with a prefix that matches the file name.
 
     return "Hello World"
@@ -24,6 +24,6 @@ proc does_not_start_with_linter_test {args} {
     return "Hello World"
 }
 
-proc linter_test_no_comment {args} {
+proc test::linter_test_no_comment {args} {
     return "Hello World"
 }
