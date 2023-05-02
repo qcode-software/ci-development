@@ -1,0 +1,87 @@
+package require tcltest
+namespace import ::tcltest::test
+namespace import ::tcltest::cleanupTests
+namespace import ::tcltest::testConstraint
+
+set files [lsort [glob -nocomplain "~/ci-development/tcl/*.tcl"]]
+
+foreach file $files {
+    source $file
+}
+
+set setup {
+    set tcl_path "~/ci-development/test/files"
+    set tcl_file "proc_names_conform_test.tcl"
+}
+
+test proc_names_conform_to_filename_report-1.0 \
+    {Report the proc names that don't conform to the filename and directory structure.} \
+    -body {
+        set file "test/names.tcl"
+        set proc_names [list \
+                            ::test::names \
+                            test::names \
+                            ::test::names_again \
+                            test::names_again \
+                            ::test::namesagain \
+                            test::namesagain \
+                            ::test::names::again \
+                            test::names::again \
+                            names \
+                            ::names \
+                            names_again \
+                            ::names_again \
+                            test \
+                            ::test \
+                            test_again \
+                            ::test_again]
+        set report [proc_names_conform_to_filename_report $file $proc_names]
+
+        return [expr {[string length $report] > 0 }]
+    } \
+    -result 1
+
+test proc_names_conform_to_filename_count-1.0 \
+    {Count the proc names that don't conform to the filename and directory structure.} \
+    -body {
+        set file "test/names.tcl"
+        set proc_names [list \
+                            ::test::names \
+                            test::names \
+                            ::test::names_again \
+                            test::names_again \
+                            ::test::namesagain \
+                            test::namesagain \
+                            ::test::names::again \
+                            test::names::again \
+                            names \
+                            ::names \
+                            names_again \
+                            ::names_again \
+                            test \
+                            ::test \
+                            test_again \
+                            ::test_again]
+        return [proc_names_conform_to_filename_count $file $proc_names]
+    } \
+    -result 12
+
+test proc_names_conform_report-1.0 \
+    {Report proc names in files that don't conform to the filename and directory
+     structure.} \
+    -setup $setup \
+    -body {
+        set report [proc_names_conform_report $tcl_path [list $tcl_file]]
+
+        return [expr { [string length $report] > 0 }]
+    } \
+    -result 1
+
+test proc_names_conform_count-1.0 \
+    {Count procs in files that don't conform to the filename and directory
+     structure.} \
+    -setup $setup \
+    -body {
+        return [proc_names_conform_count $tcl_path [list $tcl_file]]
+    } \
+    -result 3

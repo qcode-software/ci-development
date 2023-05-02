@@ -129,8 +129,8 @@ set test_files [fileutil::findByPattern $test_dir "*.test"]
 puts "Checking for files that are more than $file_length lines long."
 puts "---"
 
-puts [linter_report_files_over_length $tcl_files $file_length]
-set count [linter_count_files_over_length $tcl_files $file_length]
+puts [files_over_length_report $tcl_files $file_length]
+set count [files_over_length_count $tcl_files $file_length]
 
 puts ""
 puts "$count files exceeding $file_length lines found."
@@ -142,8 +142,8 @@ puts ""
 puts "Checking for lines longer than $line_length characters."
 puts "---"
 
-puts [linter_report_lines_over_length $tcl_files $line_length]
-set count [linter_count_lines_over_length $tcl_files $line_length]
+puts [lines_over_length_report $tcl_files $line_length]
+set count [lines_over_length_count $tcl_files $line_length]
 
 puts ""
 puts "$count lines exceeding $line_length characters found."
@@ -155,8 +155,8 @@ puts ""
 puts "Checking for procs that have bodies that are more than $proc_length lines long."
 puts "---"
 
-puts [linter_report_procs_over_length $tcl_files $proc_length]
-set count [linter_count_procs_over_length $tcl_files $proc_length]
+puts [procs_over_length_report $tcl_files $proc_length]
+set count [procs_over_length_count $tcl_files $proc_length]
 
 puts ""
 puts "$count procs with bodies exceeding $proc_length lines found."
@@ -194,8 +194,8 @@ puts ""
 puts "Checking for procs that do not have a #| comment."
 puts "---"
 
-puts [linter_report_procs_without_proc_comment $tcl_files]
-set count [linter_count_procs_without_proc_comment $tcl_files]
+puts [procs_without_proc_comment_report $tcl_files]
+set count [procs_without_proc_comment_count $tcl_files]
 
 puts ""
 puts "$count procs that do not have a #| comment found."

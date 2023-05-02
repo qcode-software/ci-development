@@ -10,52 +10,52 @@ foreach file $files {
 }
 
 set setup {
-    set test_file "~/ci-development/tests/tcl/files/linter_test.tcl"
+    set test_file "~/ci-development/test/files/linter_test.tcl"
 }
 
-test linter_cat-1.0 \
+test cat-1.0 \
     {Get the contets of a file.} \
     -setup $setup \
     -body {
-        set contents [linter_cat $test_file]
+        set contents [cat $test_file]
 
         return [expr { [string length $contents] > 0 }]
     } \
     -result 1
 
-test linter_report_files_over_length-1.0 \
+test files_over_length_report-1.0 \
     {Test that long files are reported.} \
     -setup $setup \
     -body {
-        set report [linter_report_files_over_length [list $test_file] 1]
+        set report [files_over_length_report [list $test_file] 1]
 
         return [expr { [string length $report] > 0 }]
     } \
     -result 1
 
-test linter_count_files_over_length-1.0 \
+test files_over_length_count-1.0 \
     {Count files over a given number of lines.} \
     -setup $setup \
     -body {
-        return [linter_count_files_over_length [list $test_file] 1]
+        return [files_over_length_count [list $test_file] 1]
     } \
     -result 1
 
-test linter_report_lines_over_length-1.0 \
+test lines_over_length_report-1.0 \
     {Test long lines are reported for a given file.} \
     -setup $setup \
     -body {
-        set report [linter_report_lines_over_length [list $test_file] 90]
+        set report [lines_over_length_report [list $test_file] 90]
 
         return [expr { [string length $report] > 0 }]
     } \
     -result 1
 
-test linter_count_lines_over_length-1.0 \
+test lines_over_length_count-1.0 \
     {Count the lines over a given length.} \
     -setup $setup \
     -body {
-        return [linter_count_lines_over_length [list $test_file] 90]
+        return [lines_over_length_count [list $test_file] 90]
     } \
     -result 2
 
@@ -83,28 +83,11 @@ test linter_proc_name_prefixes_from_filename-1.1 \
     } \
     -result {test_file_name test::file_name test_file::name test::file::name}
 
-test linter_report_procs_without_filename_prefix-1.0 \
-    {Test proc names not prefixed with the file name are reported.} \
-    -setup $setup \
-    -body {
-        set report [linter_report_procs_without_filename_prefix [list $test_file]]
 
-        return [expr { [string length $report] > 0 }]
-    } \
-    -result 1
-
-test linter_count_procs_without_filename_prefix-1.0 \
-    {Count procs not prefixed with the file name.} \
-    -setup $setup \
-    -body {
-        return [linter_count_procs_without_filename_prefix [list $test_file]]
-    } \
-    -result 2
-
-test linter_proc_names_parse-1.0 \
+test proc_names_parse-1.0 \
     {Test that proc names are parsed from a string.} \
     -body {
-        set proc_names [linter_proc_names_parse {
+        set proc_names [proc_names_parse {
             proc proc_names_test_1 {args} {
                 return "Hello World"
             }
@@ -132,7 +115,7 @@ test linter_proc_names_parse-1.0 \
     } \
     -result 1
 
-test linter_tcl_commands-1.0 \
+test tcl_commands-1.0 \
     {Get the Tcl commands from a string.} \
     -setup $setup \
     -body {
@@ -145,7 +128,7 @@ test linter_tcl_commands-1.0 \
             set foo "bar"
         }
 
-        set commands [linter_tcl_commands $test]
+        set commands [tcl_commands $test]
 
         set command1 [lindex $commands 0]
         set command2 [lindex $commands 1]
@@ -176,7 +159,7 @@ test linter_tcl_commands-1.0 \
     } \
     -result 1
 
-test linter_sql_query_indices-1.0 \
+test sql_query_indices-1.0 \
     {Get the indices of queries in a string.} \
     -setup $setup \
     -body {
@@ -208,11 +191,11 @@ test linter_sql_query_indices-1.0 \
             set query4 {delete from test}
         }
 
-        return [linter_sql_query_indices $string] 
+        return [sql_query_indices $string] 
     } \
     -result {{24 122} {148 270} {296 440} {466 483}}
 
-test linter_sql_queries_length-1.0 \
+test sql_queries_length-1.0 \
     {Get the combined length of queries in a string.} \
     -setup $setup \
     -body {
@@ -243,11 +226,11 @@ test linter_sql_queries_length-1.0 \
 
             set query4 {delete from test}
         }
-        return [linter_sql_queries_length $string]
+        return [sql_queries_length $string]
     } \
     -result {22}
 
-test linter_proc_lengths-1.0 \
+test proc_lengths-1.0 \
     {Get body length of procs in a string.} \
     -setup $setup \
     -body {
@@ -329,32 +312,32 @@ test linter_proc_lengths-1.0 \
             }
         }
 
-        return [linter_proc_lengths $test]
+        return [proc_lengths $test]
     } \
     -result {test_1 2 test_2 4 test_3 3 test_4 1 test_5 1 test_6 9}
 
-test linter_report_procs_over_length-1.0 \
+test procs_over_length_report-1.0 \
     {Test that procs with bodies over a specified number of lines are reported.} \
     -setup $setup \
     -body {
-        set report [linter_report_procs_over_length [list $test_file] 3]
+        set report [procs_over_length_report [list $test_file] 3]
 
         return [expr { [string length $report] > 0 }]
     } \
     -result 1
 
-test linter_count_procs_over_length-1.0 \
+test procs_over_length_count-1.0 \
     {Count procs with bodies over a specified number of lines.} \
     -setup $setup \
     -body {
-        return [linter_count_procs_over_length [list $test_file] 3]
+        return [procs_over_length_count [list $test_file] 3]
     } \
     -result 1
 
-test linter_procs_without_proc_comment-1.0 \
+test procs_without_proc_comment-1.0 \
     {Get procs that don't have a proc comment.} \
     -body {
-        set procs [linter_procs_without_proc_comment {
+        set procs [procs_without_proc_comment {
             proc test_1 {args} {
 
                 #| Test 1 proc.
@@ -396,21 +379,21 @@ test linter_procs_without_proc_comment-1.0 \
     } \
     -result 1
 
-test linter_report_procs_without_proc_comment-1.0 \
+test procs_without_proc_comment_report-1.0 \
     {Report procs without a proc comment.} \
     -setup $setup \
     -body {
-        set report [linter_report_procs_without_proc_comment [list $test_file]]
+        set report [procs_without_proc_comment_report [list $test_file]]
 
         return [expr { [string length $report] > 0 }]
     } \
     -result 1
 
-test linter_count_procs_without_proc_comment-1.0 \
+test procs_without_proc_comment_count-1.0 \
     {Count procs that don't have a proc comment.} \
     -setup $setup \
     -body {
-        return [linter_count_procs_without_proc_comment [list $test_file]]
+        return [procs_without_proc_comment_count [list $test_file]]
     } \
     -result 1
 
