@@ -7,9 +7,9 @@ proc procs_over_length_report {
     set report [list]
 
     foreach file $files {
-        set contents [linter_cat $file]
+        set contents [cat $file]
 
-        dict for {proc_name body_length} [linter_proc_lengths $contents] {
+        dict for {proc_name body_length} [proc_lengths $contents] {
             if { $body_length > $max_proc_length } {
                 lappend report "The proc \"$proc_name\" in file $file has a body that is\
                                 $body_length lines long."
@@ -29,9 +29,9 @@ proc procs_over_length_count {
     set count 0
 
     foreach file $files {
-        set contents [linter_cat $file]
+        set contents [cat $file]
 
-        dict for {proc_name body_length} [linter_proc_lengths $contents] {
+        dict for {proc_name body_length} [proc_lengths $contents] {
             if { $body_length > $max_proc_length } {
                 incr count
             }

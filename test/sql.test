@@ -1,0 +1,81 @@
+package require tcltest
+namespace import ::tcltest::test
+namespace import ::tcltest::cleanupTests
+namespace import ::tcltest::testConstraint
+
+set files [lsort [glob -nocomplain "~/ci-development/tcl/*.tcl"]]
+
+foreach file $files {
+    source $file
+}
+
+test sql_query_indices-1.0 \
+    {Get the indices of queries in a string.} \
+    -body {
+        set string {
+            set query1 {
+                select
+                *
+
+                from
+                test
+            }
+
+            set query2 {
+                insert into test
+                (a, b, c)
+                values
+                (1, 2, 3)
+            }
+
+            set query3 {
+                update
+                test
+                set
+                a = 1
+                where
+                b = 2
+            }
+
+            set query4 {delete from test}
+        }
+
+        return [sql_query_indices $string] 
+    } \
+    -result {{24 122} {148 270} {296 440} {466 483}}
+
+test sql_queries_length-1.0 \
+    {Get the combined length of queries in a string.} \
+    -body {
+        set string {
+            set query1 {
+                select
+                *
+
+                from
+                test
+            }
+
+            set query2 {
+                insert into test
+                (a, b, c)
+                values
+                (1, 2, 3)
+            }
+
+            set query3 {
+                update
+                test
+                set
+                a = 1
+                where
+                b = 2
+            }
+
+            set query4 {delete from test}
+        }
+        return [sql_queries_length $string]
+    } \
+    -result {22}
+
+cleanupTests

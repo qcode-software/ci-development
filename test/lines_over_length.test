@@ -1,0 +1,34 @@
+package require tcltest
+namespace import ::tcltest::test
+namespace import ::tcltest::cleanupTests
+namespace import ::tcltest::testConstraint
+
+set files [lsort [glob -nocomplain "~/ci-development/tcl/*.tcl"]]
+
+foreach file $files {
+    source $file
+}
+
+set setup {
+    set test_file "~/ci-development/test/files/linter_test.tcl"
+}
+
+test lines_over_length_report-1.0 \
+    {Test long lines are reported for a given file.} \
+    -setup $setup \
+    -body {
+        set report [lines_over_length_report [list $test_file] 90]
+
+        return [expr { [string length $report] > 0 }]
+    } \
+    -result 1
+
+test lines_over_length_count-1.0 \
+    {Count the lines over a given length.} \
+    -setup $setup \
+    -body {
+        return [lines_over_length_count [list $test_file] 90]
+    } \
+    -result 2
+
+cleanupTests

@@ -10,8 +10,8 @@ foreach file $files {
 }
 
 set setup {
-    set tcl_file "~/ci-development/tests/tcl/files/test-coverage/coverage_test.tcl"
-    set test_file "~/ci-development/tests/tcl/files/test-coverage/coverage_test.test"
+    set tcl_file "~/ci-development/test/files/test-coverage/coverage_test.tcl"
+    set test_file "~/ci-development/test/files/test-coverage/coverage_test.test"
 }
 
 test test_coverage_file_line_matches_get-1.0 \

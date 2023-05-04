@@ -1,0 +1,26 @@
+package require tcltest
+namespace import ::tcltest::test
+namespace import ::tcltest::cleanupTests
+namespace import ::tcltest::testConstraint
+
+set files [lsort [glob -nocomplain "~/ci-development/tcl/*.tcl"]]
+
+foreach file $files {
+    source $file
+}
+
+set setup {
+    set test_file "~/ci-development/test/files/linter_test.tcl"
+}
+
+test cat-1.0 \
+    {Get the contets of a file.} \
+    -setup $setup \
+    -body {
+        set contents [cat $test_file]
+
+        return [expr { [string length $contents] > 0 }]
+    } \
+    -result 1
+
+cleanupTests

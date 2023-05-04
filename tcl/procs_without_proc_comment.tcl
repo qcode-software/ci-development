@@ -32,7 +32,7 @@ proc procs_without_proc_comment_report {files} {
     set report [list]
 
     foreach file $files {
-        foreach proc_name [procs_without_proc_comment [linter_cat $file]] {
+        foreach proc_name [procs_without_proc_comment [cat $file]] {
             lappend report "The proc $proc_name in file $file does not have a #| comment."
         }
     }
@@ -46,7 +46,7 @@ proc procs_without_proc_comment_count {files} {
     set count 0
 
     foreach file $files {
-        set procs [procs_without_proc_comment [linter_cat $file]]
+        set procs [procs_without_proc_comment [cat $file]]
         incr count [llength $procs]
     }
 

@@ -4,22 +4,26 @@ proc proc_names_conform_to_filename_report {file_path proc_names} {
     #| * Do not have the correct namespaces.
 
     set filename [file tail $file_path]
-    set rootname [file rootname $filename]
+    set root_filename [file rootname $filename]
     set report [list]
 
     foreach proc_name $proc_names {
         set proc_tail [namespace tail $proc_name]
 
-        if { [string first $rootname $proc_tail] != 0 } {
-            lappend report "The proc name \"$proc_name\" does not belong in $filename"
+        if { [string first $root_filename $proc_tail] != 0 } {
+            lappend report "The proc name \"$proc_tail\" does not belong in the\
+                            file \"$filename\"."
         }
 
-        set proc_path [string map {/ ::} [file rootname $file_path]]
-        set pattern {^(::)?([^:]+::)?${proc_path}((_[^_]+)|$)}
-        set pattern [subst -nocommands -nobackslashes $pattern]
+        set dir_path [file dirname $file_path]
+        set file_path_namespace [string map {/ ::} $dir_path]
+        set proc_namespace [namespace qualifier $proc_name]
 
-        if { ![regexp $pattern $proc_name] } {
-            lappend report "The proc name \"$proc_name\" does not belong in the directory $file_path"
+        if { ([string first "/" $file_path] >= 0 || [string first "::" $proc_name] >= 0)
+             && $proc_namespace ne $file_path_namespace} {
+            lappend report "The namespace \"$proc_namespace\" from proc\
+                            \"$proc_name\" does not belong in the directory\
+                            \"${dir_path}\"."
         }
     }
 
@@ -32,17 +36,19 @@ proc proc_names_conform_to_filename_count {file_path proc_names} {
     #| * Do not have the correct namespaces.
 
     set filename [file tail $file_path]
-    set rootname [file rootname $filename]
+    set root_filename [file rootname $filename]
     set count 0
 
     foreach proc_name $proc_names {
         set proc_tail [namespace tail $proc_name]
-        set proc_path [string map {/ ::} [file rootname $file_path]]
-        set pattern {^(::)?([^:]+::)?${proc_path}((_[^_]+)|$)}
-        set pattern [subst -nocommands -nobackslashes $pattern]
+        set dir_path [file dirname $file_path]
+        set file_path_namespace [string map {/ ::} $dir_path]
+        set proc_namespace [namespace qualifier $proc_name]
 
-        if { [string first $rootname $proc_tail] != 0
-             || ![regexp $pattern $proc_name] } {
+        if { [string first $root_filename $proc_tail] != 0
+             || (([string first "/" $file_path] >= 0
+                  || [string first "::" $proc_name] >= 0)
+                 && $proc_namespace ne $file_path_namespace) } {
             incr count
         }
     }

@@ -7,7 +7,7 @@ proc files_over_length_report {
     set report [list]
 
     foreach file $files {
-        set contents [linter_cat $file]
+        set contents [cat $file]
         set line_count [llength [split $contents "\n"]]
 
         if { $line_count > $max_file_length } {
@@ -27,7 +27,7 @@ proc files_over_length_count {
     set count 0
 
     foreach file $files {
-        set contents [linter_cat $file]
+        set contents [cat $file]
         set line_count [llength [split $contents "\n"]]
 
         if { $line_count > $max_file_length } {

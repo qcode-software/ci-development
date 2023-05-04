@@ -11,7 +11,6 @@ foreach file $files {
 
 set setup {
     set tcl_path "~/ci-development/test/files"
-    set tcl_file "proc_names_conform_test.tcl"
 }
 
 test proc_names_conform_to_filename_report-1.0 \
@@ -64,24 +63,50 @@ test proc_names_conform_to_filename_count-1.0 \
                             ::test_again]
         return [proc_names_conform_to_filename_count $file $proc_names]
     } \
-    -result 12
+    -result 13
 
 test proc_names_conform_report-1.0 \
-    {Report proc names in files that don't conform to the filename and directory
-     structure.} \
+    {Check proc name conformity in a file in the project root directory.} \
     -setup $setup \
     -body {
-        set report [proc_names_conform_report $tcl_path [list $tcl_file]]
+        set tcl_files [list "proc_names_conform_test.tcl"]
+        set report [proc_names_conform_report $tcl_path $tcl_files]
+
+        return [expr { [string length $report] > 0 }]
+    } \
+    -result 1
+
+test proc_names_conform_report-1.1 \
+    {Check proc name conformity in a file in a directory within the root directory.} \
+    -setup $setup \
+    -body {
+        set tcl_files [list "my_namespace/proc_names_conform_test.tcl"]
+        set report [proc_names_conform_report $tcl_path $tcl_files]
 
         return [expr { [string length $report] > 0 }]
     } \
     -result 1
 
 test proc_names_conform_count-1.0 \
-    {Count procs in files that don't conform to the filename and directory
-     structure.} \
+    {Count proc names not conforming to file name and directory structure in a
+     file that's in the project root directory.} \
     -setup $setup \
     -body {
-        return [proc_names_conform_count $tcl_path [list $tcl_file]]
+        set tcl_files [list "proc_names_conform_test.tcl"]
+
+        return [proc_names_conform_count $tcl_path $tcl_files]
     } \
-    -result 3
+    -result 4
+
+test proc_names_conform_count-1.1 \
+    {Count proc names not conforming to file name and directory structure in a
+     file that's in a directory within the project root directory.} \
+    -setup $setup \
+    -body {
+        set tcl_files [list "my_namespace/proc_names_conform_test.tcl"]
+
+        return [proc_names_conform_count $tcl_path $tcl_files]
+    } \
+    -result 6
+
+cleanupTests

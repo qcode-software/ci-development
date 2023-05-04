@@ -4,17 +4,22 @@ proc proc_names_conform_test {args} {
 }
 
 proc proc_names_conform_test_two {args} {
-    #| Passing proc name.
+    #| Passing extended proc name.
+    return 1
+}
+
+proc proc_names_conform_testthree {args} {
+    #| Passing extended proc name.
     return 1
 }
 
 proc ::proc_names_conform_test {args} {
-    #| Passing proc name with global namespace.
+    #| Failing namespace - global namespace.
     return 1
 }
 
-proc test::proc_names_conform_test {args} {
-    #| Passing proc name with one namespace.
+proc test::fail::proc_names_conform_test {args} {
+    #| Failing namespaces.
     return 1
 }
 
@@ -23,12 +28,7 @@ proc failing_proc_name {args} {
     return 1
 }
 
-proc test::fail::proc_names_conform_test {args} {
-    #| Failing namespace in proc name.
-    return 1
-}
-
-proc test::fail::proc_name {args} {
+proc test::proc_name {args} {
     #| Failing namespace and proc name.
     return 1
 }
