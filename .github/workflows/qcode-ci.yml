@@ -78,6 +78,13 @@ jobs:
           repository: qcode-software/ci-development
           path: qcode-ci
 
+      - name: Set Up the Qcode CI Tcl Package
+        run: |
+          cd ${{ github.workspace }}/qcode-ci
+          mkdir -p packages/qcode-ci
+          ./package.tcl ./tcl packages/qcode-ci qcode-ci 1.0.0
+          ./pkg_mkIndex packages/qcode-ci
+
       - name: Get Changed Tcl Script Files
         id: changed-files
         uses: tj-actions/changed-files@v34
@@ -150,7 +157,6 @@ jobs:
         run: |
           cd ${{ github.workspace }}/qcode-ci/scripts
           tclsh file-length-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ inputs.max_file_length }} \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
