@@ -80,7 +80,11 @@ proc proc_names_conform_report {tcl_path tcl_files} {
     foreach tcl_file $tcl_files {
         set file [file join $tcl_path $tcl_file]
         set proc_names [proc_names_parse [cat $file]]
-        lappend report [proc_names_conform_to_filename_report $tcl_file $proc_names]
+        set file_report [proc_names_conform_to_filename_report $tcl_file $proc_names]
+
+        if { $file_report ne "" } {
+            lappend report $file_report
+        }
     }
 
     return [join $report "\n"]

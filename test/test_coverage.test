@@ -368,8 +368,8 @@ test test_coverage-1.0 \
     -setup $setup \
     -body {
         set data [test_coverage \
-                      "~/ci-development/tests/tcl/files/test-coverage" \
-                      "~/ci-development/tests/tcl/files/test-coverage"]
+                      "~/ci-development/test/files/test-coverage" \
+                      "~/ci-development/test/files/test-coverage"]
 
         set keys [list \
                       line_count \

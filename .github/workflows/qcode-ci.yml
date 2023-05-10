@@ -171,6 +171,5 @@ jobs:
         run: |
           cd ${{ github.workspace }}/qcode-ci/scripts
           tclsh proc-comment-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
