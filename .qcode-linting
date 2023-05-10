@@ -2,4 +2,4 @@ line_length = 90
 file_length = 500
 proc_length = 80
 tcl_dir = tcl
-test_dir = tests
+test_dir = test

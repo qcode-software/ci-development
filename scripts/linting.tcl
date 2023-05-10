@@ -168,8 +168,10 @@ puts ""
 puts "Checking for proc names that are not prefixed with the file name."
 puts "---"
 
-puts [linter_report_procs_without_filename_prefix $tcl_files]
-set count [linter_count_procs_without_filename_prefix $tcl_files]
+set tcl_files_relative [lmap x $tcl_files {fileutil::stripPath $tcl_dir $x}]
+
+puts [proc_names_conform_report $tcl_dir $tcl_files_relative]
+set count [proc_names_conform_count $tcl_dir $tcl_files_relative]
 
 puts ""
 puts "$count procs without file name as a prefix found."

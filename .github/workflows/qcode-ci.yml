@@ -57,6 +57,11 @@ on:
         default: test
         required: false
         type: string
+      tcl_directory:
+        description: 'Directory within the repository where Tcl files are located.'
+        default: tcl
+        required: false
+        type: string
 
 jobs:
   linting:
@@ -101,7 +106,6 @@ jobs:
         run: |
           cd ${{ github.workspace }}/qcode-ci/scripts
           tclsh line-length-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ inputs.max_line_length }} \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
@@ -115,10 +119,9 @@ jobs:
         run: |
           cd ${{ github.workspace }}/qcode-ci/scripts
           tclsh proc-name-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ github.workspace }} \
+            ${{ inputs.tcl_directory }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
-
 
       - name: Check for Proc Bodies Exceeding Max Lines
         if: >
@@ -129,7 +132,6 @@ jobs:
         run: |
           cd ${{ github.workspace }}/qcode-ci/scripts
           tclsh proc-length-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ inputs.max_proc_body_length }} \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
@@ -143,7 +145,6 @@ jobs:
         run: |
           cd ${{ github.workspace }}/qcode-ci/scripts
           tclsh procs-have-unit-tests-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/test_coverage.tcl \
             ${{ github.workspace }} \
             ${{ inputs.test_directory }} \
             ${{ steps.changed-files.outputs.all_changed_files }}

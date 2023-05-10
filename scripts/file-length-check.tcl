@@ -1,7 +1,6 @@
-set linter [lindex $argv 0]
-set max_lines [lindex $argv 1]
-set repository [lindex $argv 2]
-set files [lrange $argv 3 end]
+set max_lines [lindex $argv 0]
+set repository [lindex $argv 1]
+set files [lrange $argv 2 end]
 
 global auto_path
 lappend auto_path [file join $repository packages]

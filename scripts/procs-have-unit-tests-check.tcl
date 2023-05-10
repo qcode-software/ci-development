@@ -1,9 +1,10 @@
-set test_coverage_api [lindex $argv 0]
-set repository [lindex $argv 1]
-set test_dir [lindex $argv 2]
-set files [lrange $argv 3 end]
+set repository [lindex $argv 0]
+set test_dir [lindex $argv 1]
+set files [lrange $argv 2 end]
 
-source $test_coverage_api
+global auto_path
+lappend auto_path [file join $repository packages]
+package require qcode-ci
 package require fileutil
 
 puts "Checking for procs that do not have at least one unit test."

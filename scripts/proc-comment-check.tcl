@@ -1,8 +1,9 @@
-set linter [lindex $argv 0]
-set repository [lindex $argv 1]
-set files [lrange $argv 2 end]
+set repository [lindex $argv 0]
+set files [lrange $argv 1 end]
 
-source $linter
+global auto_path
+lappend auto_path [file join $repository packages]
+package require qcode-ci
 
 puts "Checking procs have a #| comment in files that have changed."
 

@@ -13,7 +13,8 @@ jobs:
       files: |
         scripts/**.tcl
         tcl/**.tcl
-      test_directory: tests
+      tcl_directory: tcl
+      test_directory: test
       max_line_length: 90
       max_file_length: 500
       max_proc_body_length: 80
