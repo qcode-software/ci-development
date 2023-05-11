@@ -66,6 +66,9 @@ on:
 jobs:
   linting:
     runs-on: ubuntu-latest
+    env:
+      packages_path: ${{ github.workspace }}/qcode-ci/packages
+      scripts_path: ${{ github.workspace }}/qcode-ci/scripts
     steps:
       - name: Dependencies
         run: |
@@ -86,9 +89,9 @@ jobs:
       - name: Set Up the Qcode CI Tcl Package
         run: |
           cd ${{ github.workspace }}/qcode-ci
-          mkdir -p packages/qcode-ci
-          ./package.tcl ./tcl packages/qcode-ci qcode-ci 1.0.0
-          ./pkg_mkIndex packages/qcode-ci
+          mkdir -p ${{ env.packages_path }}/qcode-ci
+          ./package.tcl ./tcl ${{ env.packages_path}}/qcode-ci qcode-ci 1.0.0
+          ./pkg_mkIndex ${{ env.packages_path }}/qcode-ci
 
       - name: Get Changed Tcl Script Files
         id: changed-files
@@ -104,10 +107,11 @@ jobs:
           && inputs.check_line_lengths
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh line-length-check.tcl \
             ${{ inputs.max_line_length }} \
             ${{ github.workspace }} \
+            ${{ env.packages_path }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Check for Proc Names Not Prefixed with File Name
@@ -117,9 +121,10 @@ jobs:
           && inputs.check_proc_names
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh proc-name-check.tcl \
             ${{ github.workspace }} \
+            ${{ env.packages_path }} \
             ${{ inputs.tcl_directory }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
 
@@ -130,10 +135,11 @@ jobs:
           && inputs.check_proc_lengths
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh proc-length-check.tcl \
             ${{ inputs.max_proc_body_length }} \
             ${{ github.workspace }} \
+            ${{ env.packages_path }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Check Procs Have Unit Tests
@@ -143,9 +149,10 @@ jobs:
           && inputs.check_procs_have_unit_tests
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh procs-have-unit-tests-check.tcl \
             ${{ github.workspace }} \
+            ${{ env.packages_path }} \
             ${{ inputs.test_directory }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
 
@@ -156,10 +163,11 @@ jobs:
           && inputs.check_file_lengths
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh file-length-check.tcl \
             ${{ inputs.max_file_length }} \
             ${{ github.workspace }} \
+            ${{ env.packages_path }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: 'Check Procs Have #| Comments'
@@ -169,7 +177,8 @@ jobs:
           && inputs.check_proc_comments
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh proc-comment-check.tcl \
             ${{ github.workspace }} \
+            ${{ env.packages_path }} \
             ${{ steps.changed-files.outputs.all_changed_files }}

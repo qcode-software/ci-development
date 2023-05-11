@@ -6,26 +6,36 @@ proc proc_lengths {string} {
     set proc_lengths [dict create]
 
     foreach command $commands {
-        switch -regexp $command {
-            {^proc} {
-                set proc_name [lindex $command 1]
-                set proc_body [lindex $command 3]
-                set body_length [llength [split [string trim $proc_body] "\n"]]
-                set query_count [llength [sql_query_indices $proc_body]]
-                set query_length [sql_queries_length $proc_body]
-                set body_length [expr {$body_length - $query_length + $query_count}]
+        set words [tcl_command_words $command]
+        set command_name [lindex $words 0]
 
-                dict set proc_lengths $proc_name $body_length
-            }
-            {^namespace eval} {
+        if { $command_name eq "proc" } {
+            lassign $words \
+                command_name \
+                proc_name \
+                proc_args \
+                proc_body
+            set proc_body [join $proc_body]
+            set body_length [llength [split [string trim $proc_body] "\n"]]
+            set query_count [llength [sql_query_indices $proc_body]]
+            set query_length [sql_queries_length $proc_body]
+            set body_length [expr {$body_length - $query_length + $query_count}]
+
+            dict set proc_lengths $proc_name $body_length
+        } elseif { $command_name eq "namespace" } {
+            lassign $words \
+                command_name \
+                subcommand \
+                name \
+                body
+
+            if { $subcommand eq "eval" } {
                 set proc_lengths [dict merge \
                                       $proc_lengths \
-                                      [proc_lengths [lindex $command 3]]]
+                                      [proc_lengths [join $body]]]
             }
         }
     }
 
     return $proc_lengths
 }
-
-

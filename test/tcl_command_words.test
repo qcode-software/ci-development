@@ -1,0 +1,48 @@
+package require tcltest
+namespace import ::tcltest::test
+namespace import ::tcltest::cleanupTests
+namespace import ::tcltest::testConstraint
+
+set files [lsort [glob -nocomplain "~/ci-development/tcl/*.tcl"]]
+
+foreach file $files {
+    source $file
+}
+
+test tcl_command_words-1.0 \
+    {Get the Tcl words from a simple Tcl command.} \
+    -body {
+        set script {set foo "bar"}
+        set commands [tcl_commands $script]
+        set words [tcl_command_words [lindex $commands 0]]
+
+        if { $words ne {set foo {"bar"}} } {
+            error "Expected {set foo \{\"bar\"\}} but got $words"
+        }
+
+        return 1
+    } \
+    -result 1
+
+test tcl_command_words-2.0 \
+    {Get the Tcl words from a proc.} \
+    -body {
+        set script {
+            proc test_1 {args} {
+                # This is a test proc.
+                return 1
+            }
+        }
+
+        set commands [tcl_commands $script]
+        set words [tcl_command_words [lindex $commands 0]]
+
+        if { [llength $words] != 4 } {
+            error "Expected 4 words but got [llength $words]"
+        }
+
+        return 1
+    } \
+    -result 1
+
+cleanupTests

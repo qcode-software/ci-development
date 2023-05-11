@@ -1,8 +1,9 @@
 set repository [lindex $argv 0]
-set files [lrange $argv 1 end]
+set packages_path [lindex $argv 1]
+set files [lrange $argv 2 end]
 
 global auto_path
-lappend auto_path [file join $repository packages]
+lappend auto_path $packages_path
 package require qcode-ci
 
 puts "Checking procs have a #| comment in files that have changed."

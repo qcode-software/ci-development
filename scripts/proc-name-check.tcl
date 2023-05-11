@@ -1,9 +1,10 @@
 set repository [lindex $argv 0]
-set tcl_dir [lindex $argv 1]
-set files [lrange $argv 2 end]
+set packages_path [lindex $argv 1]
+set tcl_dir [lindex $argv 2]
+set files [lrange $argv 3 end]
 
 global auto_path
-lappend auto_path [file join $repository packages]
+lappend auto_path $packages_path
 package require qcode-ci
 
 puts "Checking proc name prefixes in files that have changed."

@@ -1,9 +1,10 @@
 set max_lines [lindex $argv 0]
 set repository [lindex $argv 1]
-set files [lrange $argv 2 end]
+set packages_path [lindex $argv 2]
+set files [lrange $argv 3 end]
 
 global auto_path
-lappend auto_path [file join $repository packages]
+lappend auto_path $packages_path
 package require qcode-ci
 
 puts "Checking for procs that have bodies that are more than $max_lines lines long."

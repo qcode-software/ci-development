@@ -5,20 +5,29 @@ proc procs_without_proc_comment {string} {
     set commands [tcl_commands $string]
 
     foreach command $commands {
-        set command_name [lindex $command 0]
+        set words [tcl_command_words $command]
+        set command_name [lindex $words 0]
 
         if { $command_name eq "proc" } {
-            lassign $command command_name proc_name args body
-            set body_lines [split [string trim $body] "\n"]
+            lassign $words \
+                command_name \
+                proc_name \
+                args \
+                body
+            set body_lines [split [string trim [join $body]] "\n"]
 
             if { [lsearch -regexp $body_lines {^#\|}] == -1 } {
                 lappend procs $proc_name
             }
         } elseif { $command_name eq "namespace" } {
-            lassign $command command_name subcommand namespace body
+            lassign $words \
+                command_name \
+                subcommand \
+                namespace \
+                body
 
             if { $subcommand eq "eval" } {
-                lappend procs {*}[procs_without_proc_comment $body]
+                lappend procs {*}[procs_without_proc_comment [join $body]]
             }
         }
     }
