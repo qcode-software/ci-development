@@ -73,11 +73,11 @@ jobs:
       - name: Dependencies
         run: |
           apt-get update
-          apt-get install -y gnupg2 wget
+          apt-get install -y gnupg2 wget git tclsh tcllib tdom tclcurl libpgtcl 
           echo "deb http://deb.qcode.co.uk buster main" > /etc/apt/sources.list.d/qcode.list
           wget --quiet -O - http://deb.qcode.co.uk/packages.key | apt-key add -
           apt-get update
-          apt-get -y install tclsh tcllib tdom tclcurl libpgtcl qcode-linter-1.0.0
+          apt-get -y install qcode-linter-1.0.0
 
       - name: Checkout
         uses: actions/checkout@v3
