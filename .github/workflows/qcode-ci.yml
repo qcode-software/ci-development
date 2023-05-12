@@ -81,9 +81,11 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v3
-        run: git config --system --add safe.directory ${{ github.workspace }}
         with:
           fetch-depth: 0
+
+      - name: Add Workspace to Git Safe Directories
+        run: git config --system --add safe.directory ${{ github.workspace }}
 
       - name: Checkout Qcode CI
         uses: actions/checkout@v3
