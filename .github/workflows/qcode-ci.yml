@@ -92,7 +92,7 @@ jobs:
 
       - name: Get Changed Tcl Script Files
         id: changed-files
-        uses: tj-actions/changed-files@v34
+        uses: tj-actions/changed-files@v35.9.2
         with:
           files: ${{ inputs.files }}
 
