@@ -1,11 +1,8 @@
 set max_line_length [lindex $argv 0]
 set repository [lindex $argv 1]
-set packages_path [lindex $argv 2]
-set files [lrange $argv 3 end]
+set files [lrange $argv 2 end]
 
-global auto_path
-lappend auto_path $packages_path
-package require qcode-ci
+package require qcode-linter
 
 puts "Checking line length is under $max_line_length chars in files that have changed."
 

@@ -1,10 +1,7 @@
 set repository [lindex $argv 0]
-set packages_path [lindex $argv 1]
-set files [lrange $argv 2 end]
+set files [lrange $argv 1 end]
 
-global auto_path
-lappend auto_path $packages_path
-package require qcode-ci
+package require qcode-linter
 
 puts "Checking procs have a #| comment in files that have changed."
 
