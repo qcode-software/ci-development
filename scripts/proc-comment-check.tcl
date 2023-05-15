@@ -1,14 +1,13 @@
-set linter [lindex $argv 0]
-set repository [lindex $argv 1]
-set files [lrange $argv 2 end]
+set repository [lindex $argv 0]
+set files [lrange $argv 1 end]
 
-source $linter
+package require qcode-linter
 
 puts "Checking procs have a #| comment in files that have changed."
 
 set tcl_files [lmap x $files {file join $repository $x}]
-puts [linter_report_procs_without_proc_comment $tcl_files]
-set count [linter_count_procs_without_proc_comment $tcl_files]
+puts [procs_without_proc_comment_report $tcl_files]
+set count [procs_without_proc_comment_count $tcl_files]
 
 if { $count > 0 } {
     exit 1

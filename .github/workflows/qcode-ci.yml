@@ -57,20 +57,35 @@ on:
         default: test
         required: false
         type: string
+      tcl_directory:
+        description: 'Directory within the repository where Tcl files are located.'
+        default: tcl
+        required: false
+        type: string
 
 jobs:
   linting:
     runs-on: ubuntu-latest
+    container: debian:buster
+    env:
+      scripts_path: ${{ github.workspace }}/qcode-ci/scripts
     steps:
       - name: Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get -y install tclsh tcllib tdom tclcurl libpgtcl
+          apt-get update
+          apt-get install -y gnupg2 wget git tclsh tcllib tdom tclcurl libpgtcl 
+          echo "deb http://deb.qcode.co.uk buster main" > /etc/apt/sources.list.d/qcode.list
+          wget --quiet -O - http://deb.qcode.co.uk/packages.key | apt-key add -
+          apt-get update
+          apt-get -y install qcode-linter-1.0.0
 
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Add Workspace to Git Safe Directories
+        run: git config --system --add safe.directory ${{ github.workspace }}
 
       - name: Checkout Qcode CI
         uses: actions/checkout@v3
@@ -80,7 +95,7 @@ jobs:
 
       - name: Get Changed Tcl Script Files
         id: changed-files
-        uses: tj-actions/changed-files@v34
+        uses: tj-actions/changed-files@v35.9.2
         with:
           files: ${{ inputs.files }}
 
@@ -92,9 +107,8 @@ jobs:
           && inputs.check_line_lengths
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh line-length-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ inputs.max_line_length }} \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
@@ -106,12 +120,11 @@ jobs:
           && inputs.check_proc_names
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh proc-name-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ github.workspace }} \
+            ${{ inputs.tcl_directory }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
-
 
       - name: Check for Proc Bodies Exceeding Max Lines
         if: >
@@ -120,9 +133,8 @@ jobs:
           && inputs.check_proc_lengths
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh proc-length-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ inputs.max_proc_body_length }} \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
@@ -134,9 +146,8 @@ jobs:
           && inputs.check_procs_have_unit_tests
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh procs-have-unit-tests-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/test_coverage.tcl \
             ${{ github.workspace }} \
             ${{ inputs.test_directory }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
@@ -148,9 +159,8 @@ jobs:
           && inputs.check_file_lengths
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh file-length-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ inputs.max_file_length }} \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
@@ -162,8 +172,7 @@ jobs:
           && inputs.check_proc_comments
           && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd ${{ github.workspace }}/qcode-ci/scripts
+          cd ${{ env.scripts_path }}
           tclsh proc-comment-check.tcl \
-            ${{ github.workspace }}/qcode-ci/tcl/linter.tcl \
             ${{ github.workspace }} \
             ${{ steps.changed-files.outputs.all_changed_files }}
