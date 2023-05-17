@@ -13,3 +13,4 @@ set count [files_over_length_count $tcl_files $max_lines]
 if { $count > 0 } {
     exit 1
 }
+
