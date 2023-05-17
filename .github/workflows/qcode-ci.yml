@@ -66,26 +66,24 @@ on:
 jobs:
   linting:
     runs-on: ubuntu-latest
-    container: debian:buster
     env:
       scripts_path: ${{ github.workspace }}/qcode-ci/scripts
     steps:
       - name: Dependencies
         run: |
-          apt-get update
-          apt-get install -y gnupg2 wget git tclsh tcllib tdom tclcurl libpgtcl 
-          echo "deb http://deb.qcode.co.uk buster main" > /etc/apt/sources.list.d/qcode.list
-          wget --quiet -O - http://deb.qcode.co.uk/packages.key | apt-key add -
-          apt-get update
-          apt-get -y install qcode-linter-1.0.0
+          wget http://deb.qcode.co.uk/packages.key
+          gpg --no-default-keyring --keyring ./temp-keyring.gpg --import packages.key
+          gpg --no-default-keyring --keyring ./temp-keyring.gpg --export --output qcode-packages.gpg
+          rm temp-keyring.gpg
+          sudo mv qcode-packages.gpg /etc/apt/keyrings/
+          echo "deb [signed-by=/etc/apt/keyrings/qcode-packages.gpg] http://deb.qcode.co.uk buster main" | sudo tee /etc/apt/sources.list.d/qcode.list
+          sudo apt-get update
+          sudo apt-get install -y tcl tcllib tdom tclcurl libpgtcl qcode-linter-1.0.0
 
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Add Workspace to Git Safe Directories
-        run: git config --system --add safe.directory ${{ github.workspace }}
 
       - name: Checkout Qcode CI
         uses: actions/checkout@v3
