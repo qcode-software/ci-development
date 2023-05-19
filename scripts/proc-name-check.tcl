@@ -13,7 +13,7 @@ foreach file $files {
     set parts [file split $file]
 
     if { [lindex $parts 0] eq $tcl_dir } {
-        lappend tcl_files [file join [lrange $parts 1 end]]
+        lappend tcl_files [file join {*}[lrange $parts 1 end]]
     }
 }
 
