@@ -1,6 +1,7 @@
 set repository [lindex $argv 0]
 set test_dir [lindex $argv 1]
 set files [lrange $argv 2 end]
+puts "FILES: $files"
 
 package require qcode-linter
 package require fileutil
