@@ -78,7 +78,7 @@ jobs:
           sudo mv qcode-packages.gpg /etc/apt/keyrings/
           echo "deb [signed-by=/etc/apt/keyrings/qcode-packages.gpg] https://debian.qcode.co.uk buster main" | sudo tee /etc/apt/sources.list.d/qcode.list
           sudo apt-get update
-          sudo apt-get install -y tcl tcllib tdom tclcurl libpgtcl qcode-linter-1.0.0
+          sudo apt-get install -y tcl tcllib tdom tclcurl libpgtcl qcode-linter-2.1.0
 
       - name: Checkout
         uses: actions/checkout@v3
