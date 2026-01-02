@@ -76,7 +76,7 @@ jobs:
           gpg --no-default-keyring --keyring ./temp-keyring.gpg --export --output qcode-packages.gpg
           rm temp-keyring.gpg
           sudo mv qcode-packages.gpg /etc/apt/keyrings/
-          echo "deb [signed-by=/etc/apt/keyrings/qcode-packages.gpg] https://debian.qcode.co.uk buster main" | sudo tee /etc/apt/sources.list.d/qcode.list
+          echo "deb [signed-by=/etc/apt/keyrings/qcode-packages.gpg] https://debian.qcode.co.uk bookworm main" | sudo tee /etc/apt/sources.list.d/qcode.list
           sudo apt-get update
           sudo apt-get install -y tcl tcllib tdom tclcurl libpgtcl qcode-linter-2.3.0
 
