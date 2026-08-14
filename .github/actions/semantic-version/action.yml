@@ -2,6 +2,12 @@ name: semantic-version
 
 description: Standard semantic versioning config
 
+inputs:
+  debug:
+    description: "Enable debug logging"
+    required: false
+    default: "false"
+
 outputs:
   version:
     value: ${{ steps.version.outputs.version }}
@@ -19,4 +25,5 @@ runs:
         version_format: "${major}.${minor}"
         bump_each_commit: true
         search_commit_body: true
+        debug: ${{ inputs.debug }}
 
