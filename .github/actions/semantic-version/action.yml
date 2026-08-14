@@ -21,9 +21,8 @@ runs:
       with:
         tag_prefix: "v"
         major_pattern: "(MAJOR)"
-        minor_pattern: "(MINOR)"
+        minor_pattern: "/.*/"
         version_format: "${major}.${minor}"
         bump_each_commit: true
         search_commit_body: true
         debug: ${{ inputs.debug }}
-
