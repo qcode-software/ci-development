@@ -23,6 +23,6 @@ runs:
         major_pattern: "(MAJOR)"
         minor_pattern: "/./"
         version_format: "${major}.${minor}"
-        bump_each_commit: true
+        bump_each_commit: false
         search_commit_body: true
         debug: ${{ inputs.debug }}
