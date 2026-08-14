@@ -15,7 +15,7 @@ runs:
       with:
         tag_prefix: "v"
         major_pattern: "(MAJOR)"
-        minor_pattern: ".*"
+        minor_pattern: "(MINOR)"
         version_format: "${major}.${minor}"
         bump_each_commit: true
         search_commit_body: true
