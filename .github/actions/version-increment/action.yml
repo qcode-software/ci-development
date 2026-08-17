@@ -6,7 +6,7 @@ inputs:
     required: true
 outputs:
   version:
-    description: "Next version prefixed with v"
+    description: "Next version"
     value: ${{ steps.calc.outputs.version }}
 
 runs:
