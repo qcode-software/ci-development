@@ -4,6 +4,9 @@ inputs:
   github_token:
     description: "GitHub token for gh CLI"
     required: true
+  increment_field:
+    description: "Field to increment (0 = rightmost, 1 = middle, 2 = leftmost (if 3 parts))"
+    default: "0"
 outputs:
   version:
     description: "Next version"
@@ -22,15 +25,32 @@ runs:
         LATEST_VERSION="$(gh release list --json tagName,isLatest --jq '.[] | select(.isLatest == true) | .tagName' | head -n1)"
         LATEST_VERSION="${LATEST_VERSION#v}"
 
+        INCREMENT=${{ inputs.increment_field }}
+        # Check if INCREMENT is 0, 1, or 2. If 2 check if the version has 3 parts, if not exit with error
+        if [[ ! "${INCREMENT}" =~ ^[0-2]$ ]]; then
+          echo "Increment field must be 0, 1, or 2"
+          exit 1
+        fi
+        if [[ "${INCREMENT}" -eq 2 && "$(echo "${LATEST_VERSION}" | awk -F. '{print NF}')" -ne 3 ]]; then
+          echo "Cannot increment leftmost part of version '${LATEST_VERSION}' because it does not have 3 parts"
+          exit 1
+        fi
+
         if [ -z "${LATEST_VERSION}" ]; then
+
           echo "No latest version found, setting next to 0.1"
           NEXT_VERSION="0.1"
+
         elif [[ "${LATEST_VERSION}" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-          NEXT_VERSION="$(echo "${LATEST_VERSION}" | awk -F. 'BEGIN{OFS="."} {$NF=$NF+1; print}')"
+
+          NEXT_VERSION="$(echo "${LATEST_VERSION}" | awk -F. -v i="$INCREMENT" 'BEGIN{OFS="."} {$(NF-i)=$(NF-i)+1; print}')"
           echo "Incrementing ${LATEST_VERSION} to ${NEXT_VERSION}"
+
         else
+
           echo "Latest version '${LATEST_VERSION}' is not in the expected format."
           exit 1
+
         fi
 
         echo "version=${NEXT_VERSION}" >> "$GITHUB_OUTPUT"
