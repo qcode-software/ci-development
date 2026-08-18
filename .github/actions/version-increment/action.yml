@@ -1,5 +1,5 @@
 name: "Next Version"
-description: "Get latest GitHub release tag and increment rightmost semver part (x.y or x.y.z)"
+description: "Get latest GitHub release tag and increment rightmost part by default (x.y or x.y.z)"
 inputs:
   github_token:
     description: "GitHub token for gh CLI"
@@ -19,13 +19,13 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github_token }}
+        INCREMENT: ${{ inputs.increment_field }}
       run: |
         set -euo pipefail
 
         LATEST_VERSION="$(gh release list --json tagName,isLatest --jq '.[] | select(.isLatest == true) | .tagName' | head -n1)"
         LATEST_VERSION="${LATEST_VERSION#v}"
 
-        INCREMENT=${{ inputs.increment_field }}
         # Check if INCREMENT is 0, 1, or 2. If 2 check if the version has 3 parts, if not exit with error
         if [[ ! "${INCREMENT}" =~ ^[0-2]$ ]]; then
           echo "Increment field must be 0, 1, or 2"
