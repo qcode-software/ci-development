@@ -1,9 +1,12 @@
 name: "Next Version"
-description: "Get latest GitHub release tag and increment rightmost semver part (x.y or x.y.z)"
+description: "Get latest GitHub release tag and increment rightmost part by default (x.y or x.y.z)"
 inputs:
   github_token:
     description: "GitHub token for gh CLI"
     required: true
+  increment_field:
+    description: "Field to increment (0 = rightmost, 1 = middle, 2 = leftmost (if 3 parts))"
+    default: "0"
 outputs:
   version:
     description: "Next version"
@@ -16,21 +19,45 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github_token }}
+        INCREMENT: ${{ inputs.increment_field }}
       run: |
         set -euo pipefail
 
-        LATEST_VERSION="$(gh release list --json tagName,isLatest --jq '.[] | select(.isLatest == true) | .tagName' | head -n1)"
-        LATEST_VERSION="${LATEST_VERSION#v}"
+        # Check if INCREMENT is 0, 1, or 2.
+        if [[ ! "${INCREMENT}" =~ ^[0-2]$ ]]; then
+          echo "Increment field must be 0, 1, or 2" >&2
+          exit 1
+        fi
 
-        if [ -z "${LATEST_VERSION}" ]; then
+        if LATEST_VERSION="$(gh release view --json tagName --jq '.tagName' 2>&1)"; then
+          LATEST_VERSION="${LATEST_VERSION#v}"
+        elif [[ "${LATEST_VERSION}" == "release not found" ]]; then
+
+          if [[ "${INCREMENT}" -ne 0 ]]; then
+            echo "Cannot use increment_field=${INCREMENT} when no release exists; initial version is '0.1'" >&2
+            exit 1
+          fi
+
           echo "No latest version found, setting next to 0.1"
           NEXT_VERSION="0.1"
-        elif [[ "${LATEST_VERSION}" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-          NEXT_VERSION="$(echo "${LATEST_VERSION}" | awk -F. 'BEGIN{OFS="."} {$NF=$NF+1; print}')"
-          echo "Incrementing ${LATEST_VERSION} to ${NEXT_VERSION}"
+          echo "version=${NEXT_VERSION}" >> "$GITHUB_OUTPUT"
+          exit 0
         else
+          echo "Error fetching latest version: ${LATEST_VERSION}" >&2
+          exit 1
+        fi
+
+        if [[ ! "${LATEST_VERSION}" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
           echo "Latest version '${LATEST_VERSION}' is not in the expected format."
           exit 1
         fi
+
+        if [[ "${INCREMENT}" -eq 2 && "${LATEST_VERSION}" != *.*.* ]]; then
+          echo "Cannot increment leftmost part of version '${LATEST_VERSION}' because it does not have 3 parts" >&2
+          exit 1
+        fi
+
+        NEXT_VERSION="$(echo "${LATEST_VERSION}" | awk -F. -v i="$INCREMENT" 'BEGIN{OFS="."} {$(NF-i)=$(NF-i)+1; print}')"
+        echo "Incrementing ${LATEST_VERSION} to ${NEXT_VERSION}"
 
         echo "version=${NEXT_VERSION}" >> "$GITHUB_OUTPUT"
