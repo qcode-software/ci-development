@@ -1,0 +1,73 @@
+name: "Debian Package From Tcl Module"
+description: "Build a .deb containing a single Tcl module, generating the control file"
+inputs:
+  version:
+    description: "Package version"
+    required: true
+  tcl_module_file:
+    description: "Path to the .tm file to package"
+    required: true
+  maintainer:
+    description: "Maintainer field"
+    required: true
+  description:
+    description: "Package description"
+    required: true
+  depends:
+    description: "Depends field (comma separated)"
+    required: true
+  package_name:
+    description: "Package name. Defaults to the repository name"
+    required: false
+    default: ""
+  package_file:
+    description: "Output .deb filename. Defaults to <package name>_<version>_all.deb"
+    required: false
+    default: ""
+outputs:
+  package_file:
+    description: "Filename of the built .deb"
+    value: ${{ steps.build.outputs.package_file }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: build
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        TCL_MODULE_FILE: ${{ inputs.tcl_module_file }}
+        MAINTAINER: ${{ inputs.maintainer }}
+        DESCRIPTION: ${{ inputs.description }}
+        DEPENDS: ${{ inputs.depends }}
+        PACKAGE_NAME: ${{ inputs.package_name }}
+        PACKAGE_FILE: ${{ inputs.package_file }}
+        REPO_NAME: ${{ github.event.repository.name }}
+      run: |
+        set -euo pipefail
+
+        PACKAGE_NAME="${PACKAGE_NAME:-${REPO_NAME}}"
+        PACKAGE_FILE="${PACKAGE_FILE:-${PACKAGE_NAME}_${VERSION}_all.deb}"
+        TREE="$(mktemp -d)"
+        chmod 755 "${TREE}"
+
+        MODULE_DIR="${TREE}/usr/lib/tcltk/tcl8/site-tcl"
+        mkdir -p "${MODULE_DIR}" "${TREE}/DEBIAN"
+        cp "${TCL_MODULE_FILE}" "${MODULE_DIR}/$(basename "${TCL_MODULE_FILE}")"
+
+        cat > "${TREE}/DEBIAN/control" <<EOF
+        Package: ${PACKAGE_NAME}
+        Version: ${VERSION}
+        Section: base
+        Priority: optional
+        Architecture: all
+        Depends: ${DEPENDS}
+        Maintainer: ${MAINTAINER}
+        Description: ${DESCRIPTION}
+
+        EOF
+
+        fakeroot dpkg-deb -Zxz --build "${TREE}" "${PACKAGE_FILE}"
+        rm -rf "${TREE}"
+
+        echo "package_file=${PACKAGE_FILE}" >> "$GITHUB_OUTPUT"
