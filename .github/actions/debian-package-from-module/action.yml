@@ -55,6 +55,11 @@ runs:
         mkdir -p "${MODULE_DIR}" "${TREE}/DEBIAN"
         cp "${TCL_MODULE_FILE}" "${MODULE_DIR}/$(basename "${TCL_MODULE_FILE}")"
 
+        # Continuation lines of a multiline description need a leading space,
+        # with blank lines written as " ."
+        DESCRIPTION="${DESCRIPTION%"${DESCRIPTION##*[![:space:]]}"}"
+        FORMATTED_DESCRIPTION="$(printf '%s\n' "${DESCRIPTION}" | awk 'NR == 1 { print; next } /^[[:space:]]*$/ { print " ."; next } { print " " $0 }')"
+
         cat > "${TREE}/DEBIAN/control" <<EOF
         Package: ${PACKAGE_NAME}
         Version: ${VERSION}
@@ -63,7 +68,7 @@ runs:
         Architecture: all
         Depends: ${DEPENDS}
         Maintainer: ${MAINTAINER}
-        Description: ${DESCRIPTION}
+        Description: ${FORMATTED_DESCRIPTION}
 
         EOF
 
