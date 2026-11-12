@@ -31,11 +31,15 @@ runs:
           echo ""
           echo "proc ${PACKAGE}_version {} { return ${VERSION} }"
           echo ""
-        } >> "${TCL_MODULE_FILE}"
+        } > "${TCL_MODULE_FILE}"
 
-        # Sorted with the C locale so the module content is deterministic
+        # Sorted with the C locale so the module content is deterministic.
+        # Run as a checked assignment so a find failure stops the action.
+        TCL_FILES="$(find "${SOURCE_DIRECTORY}/" -type f -name "*.tcl" | LC_ALL=C sort)"
+
         while IFS= read -r tcl_file; do
+          [ -z "${tcl_file}" ] && continue
           echo "${tcl_file}"
           cat "${tcl_file}" >> "${TCL_MODULE_FILE}"
           echo "" >> "${TCL_MODULE_FILE}"
-        done < <(find "${SOURCE_DIRECTORY}/" -type f -name "*.tcl" | LC_ALL=C sort)
+        done <<< "${TCL_FILES}"
