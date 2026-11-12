@@ -48,15 +48,13 @@ runs:
           line="${line#"${line%%[![:space:]]*}"}"
           line="${line%"${line##*[![:space:]]}"}"
           [ -z "${line}" ] && continue
-          # shellcheck disable=SC2206
-          matches=( ${line} )
-          for f in "${matches[@]}"; do
-            if [ ! -e "${f}" ]; then
-              echo "Asset '${f}' not found"
-              exit 1
-            fi
-            files+=("${f}")
-          done
+          # compgen -G expands globs without splitting on spaces
+          mapfile -t matches < <(compgen -G "${line}" || true)
+          if [ "${#matches[@]}" -eq 0 ]; then
+            echo "Asset '${line}' not found"
+            exit 1
+          fi
+          files+=("${matches[@]}")
         done <<< "${ASSETS}"
 
         gh release create "v${VERSION}" "${args[@]}" "${files[@]}"
