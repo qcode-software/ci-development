@@ -9,11 +9,19 @@ inputs:
     required: false
     default: "Release v{version}"
   notes_file:
-    description: "Path to a file containing release notes. If empty, notes are generated automatically"
+    description: >-
+      Path to a file containing release notes. Its contents appear above the
+      automatically generated changelog. If empty, only the changelog is used
     required: false
     default: ""
   assets:
     description: "Files to attach to the release, one path or glob per line"
+    required: false
+    default: ""
+  target:
+    description: >-
+      Commit the tag is created at. Defaults to the commit being built, so the
+      tag matches the packaged sources even if the branch moves during the run
     required: false
     default: ""
   github_token:
@@ -30,16 +38,17 @@ runs:
         TITLE_FORMAT: ${{ inputs.title_format }}
         NOTES_FILE: ${{ inputs.notes_file }}
         ASSETS: ${{ inputs.assets }}
+        TARGET: ${{ inputs.target }}
       run: |
         set -euo pipefail
 
         TITLE="${TITLE_FORMAT//\{version\}/${VERSION}}"
 
-        args=(--title "${TITLE}")
+        # gh places the contents of --notes-file above the --generate-notes
+        # changelog, which is the order the previous workflows produced.
+        args=(--title "${TITLE}" --generate-notes --target "${TARGET:-$GITHUB_SHA}")
         if [ -n "${NOTES_FILE}" ]; then
           args+=(--notes-file "${NOTES_FILE}")
-        else
-          args+=(--generate-notes)
         fi
 
         # One asset per line; blank lines are ignored. Globs are expanded by the shell.

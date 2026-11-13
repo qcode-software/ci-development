@@ -1,35 +1,37 @@
 name: "APT Upload"
 description: >-
-  Upload a .deb to a reprepro apt repository over SSH. Connects either with an
-  SSH private key or over Tailscale. No hostnames are baked in: pass host, dir
-  and user from organisation variables.
+  Upload a .deb to a reprepro apt repository over SSH. The apt server is
+  resolved from the organisation variables APT_REMOTE_{USER,HOST,DIR}_<ESTATE>,
+  so no hostnames are held here. Authentication follows the estate: an SSH
+  private key, or Tailscale.
 inputs:
   debian_package_file:
     description: "Path to the .deb file to upload"
     required: true
-  remote_user:
-    description: "SSH user on the apt server"
+  estate:
+    description: "Apt estate: tlc, mla or qcode"
     required: true
-  remote_host:
-    description: "SSH host of the apt server"
-    required: true
-  remote_dir:
-    description: "reprepro base directory on the apt server"
+  variables:
+    description: "The caller's vars context, serialised with toJSON"
     required: true
   distribution:
     description: "reprepro distribution to include the package in"
     required: false
     default: "bookworm"
-  private_key:
-    description: "SSH private key. Leave empty when using Tailscale"
+  qcode_private_key:
+    description: "SSH private key for the qcode estate"
+    required: false
+    default: ""
+  mla_private_key:
+    description: "SSH private key for the mla estate"
     required: false
     default: ""
   tailscale_oauth_client_id:
-    description: "Tailscale OAuth client ID. When set, Tailscale is used to reach the host"
+    description: "Tailscale OAuth client ID, used by the tlc estate"
     required: false
     default: ""
   tailscale_audience:
-    description: "Tailscale workload identity audience"
+    description: "Tailscale workload identity audience, used by the tlc estate"
     required: false
     default: ""
   tailscale_tags:
@@ -40,43 +42,78 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Validate auth inputs
+    - name: Resolve apt server
+      id: resolve
       shell: bash
       env:
-        PRIVATE_KEY: ${{ inputs.private_key }}
-        TS_CLIENT_ID: ${{ inputs.tailscale_oauth_client_id }}
+        ESTATE: ${{ inputs.estate }}
+        VARIABLES: ${{ inputs.variables }}
       run: |
-        if [ -z "$PRIVATE_KEY" ] && [ -z "$TS_CLIENT_ID" ]; then
-          echo "::error::Provide either private_key or tailscale_oauth_client_id"
-          exit 1
+        set -euo pipefail
+
+        case "${ESTATE}" in
+          tlc|mla|qcode) ;;
+          *) echo "::error::estate must be tlc, mla or qcode, got '${ESTATE}'"; exit 1 ;;
+        esac
+
+        SUFFIX="${ESTATE^^}"
+        for KEY in USER HOST DIR; do
+          NAME="APT_REMOTE_${KEY}_${SUFFIX}"
+          VALUE="$(jq -r --arg k "${NAME}" '.[$k] // empty' <<< "${VARIABLES}")"
+          if [ -z "${VALUE}" ]; then
+            echo "::error::Organisation variable ${NAME} is unset, or not visible to this repository"
+            exit 1
+          fi
+          echo "remote_${KEY,,}=${VALUE}" >> "$GITHUB_OUTPUT"
+        done
+
+        # Only the tlc estate is reached over Tailscale
+        if [ "${ESTATE}" = "tlc" ]; then
+          echo "tailscale=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "tailscale=false" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Tailscale
-      if: inputs.tailscale_oauth_client_id != ''
+      if: steps.resolve.outputs.tailscale == 'true'
       uses: tailscale/github-action@v4
       with:
         oauth-client-id: ${{ inputs.tailscale_oauth_client_id }}
         audience: ${{ inputs.tailscale_audience }}
         tags: ${{ inputs.tailscale_tags }}
-        ping: ${{ inputs.remote_host }}
+        ping: ${{ steps.resolve.outputs.remote_host }}
 
     - name: Upload debian package
       shell: bash
       env:
-        PRIVATE_KEY: ${{ inputs.private_key }}
+        ESTATE: ${{ inputs.estate }}
+        QCODE_PRIVATE_KEY: ${{ inputs.qcode_private_key }}
+        MLA_PRIVATE_KEY: ${{ inputs.mla_private_key }}
         DEB_FILE: ${{ inputs.debian_package_file }}
-        REMOTE_USER: ${{ inputs.remote_user }}
-        REMOTE_HOST: ${{ inputs.remote_host }}
-        REMOTE_DIR: ${{ inputs.remote_dir }}
+        REMOTE_USER: ${{ steps.resolve.outputs.remote_user }}
+        REMOTE_HOST: ${{ steps.resolve.outputs.remote_host }}
+        REMOTE_DIR: ${{ steps.resolve.outputs.remote_dir }}
         DISTRIBUTION: ${{ inputs.distribution }}
       run: |
         set -euo pipefail
+
+        case "${ESTATE}" in
+          qcode) PRIVATE_KEY="${QCODE_PRIVATE_KEY}" ;;
+          mla)   PRIVATE_KEY="${MLA_PRIVATE_KEY}" ;;
+          tlc)   PRIVATE_KEY="" ;;
+        esac
+
+        if [ "${ESTATE}" != "tlc" ] && [ -z "${PRIVATE_KEY}" ]; then
+          echo "::error::No SSH private key supplied for the ${ESTATE} estate"
+          exit 1
+        fi
+
         work_dir="$(mktemp -d)"
         trap 'rm -rf "$work_dir"' EXIT
         ssh-keyscan "$REMOTE_HOST" > "$work_dir/known_hosts"
         ssh_opts=(-o "UserKnownHostsFile=$work_dir/known_hosts")
-        if [ -n "$PRIVATE_KEY" ]; then
-          printf '%s\n' "$PRIVATE_KEY" > "$work_dir/key"
+        if [ -n "${PRIVATE_KEY}" ]; then
+          printf '%s\n' "${PRIVATE_KEY}" > "$work_dir/key"
           chmod 600 "$work_dir/key"
           ssh_opts+=(-i "$work_dir/key" -o IdentitiesOnly=yes)
         fi
