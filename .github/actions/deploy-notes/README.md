@@ -7,8 +7,9 @@ Appends a repo's deploy instructions to a release notes file. The instructions l
 | Placeholder | Value |
 |---|---|
 | `{{version}}` | `version` input |
-| `{{previous_version}}` | `previous_version` input (optional; the action fails if the template uses it while it is empty) |
 | `{{repo_name}}` | `repo_name` input, defaults to the current repository name |
+
+`{{previous_version}}` is not supported. It was never populated by `version-increment`, so every repo that used it rendered a blank. Any occurrence is removed from the template rather than left to appear literally.
 
 ## Usage
 
@@ -22,6 +23,6 @@ Appends a repo's deploy instructions to a release notes file. The instructions l
 ## Migrating a repo-local `tcl-module-deploy-markdown` copy
 
 1. Copy the heredoc body from the repo's `actions/tcl-module-deploy-markdown/action.yml` (the text between `cat << "EOF" >> ...` and `EOF`, with the YAML indentation removed) into `.github/deploy.md`.
-2. Replace `${{ inputs.version }}`, `${{ inputs.previous_version }}` and `${{ inputs.repo_name }}` in it with `{{version}}`, `{{previous_version}}` and `{{repo_name}}`.
-3. If the body has a `Backout` section using `{{previous_version}}`, make sure the caller passes `previous_version`; otherwise drop the section. Bodies that never used it (for example the `tlc-lib` style) need no change.
+2. Replace `${{ inputs.version }}` and `${{ inputs.repo_name }}` in it with `{{version}}` and `{{repo_name}}`.
+3. Delete any `Backout` section built from `${{ inputs.previous_version }}`. It has always rendered without a version, so it was never usable. Bodies that never used it (for example the `tlc-lib` style) need no change.
 4. Replace the local action call with the shared one and delete the local action directory.
