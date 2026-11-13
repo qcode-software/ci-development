@@ -1,0 +1,62 @@
+name: "Source Archive"
+description: "Create a versioned .tar.gz source archive, either from a built Tcl module or from a directory tree"
+inputs:
+  version:
+    description: "Version, written to a VERSION file inside the archive"
+    required: true
+  archive_file:
+    description: "Path of the .tar.gz file to create. When using source_directory this must be outside that directory"
+    required: true
+  tcl_module_file:
+    description: "Tcl module (.tm) to archive. It is staged under lib/ together with a VERSION file. Mutually exclusive with source_directory"
+    required: false
+    default: ""
+  source_directory:
+    description: "Directory whose contents are archived. A VERSION file is written to its root. Mutually exclusive with tcl_module_file"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        ARCHIVE_FILE: ${{ inputs.archive_file }}
+        TCL_MODULE_FILE: ${{ inputs.tcl_module_file }}
+        SOURCE_DIRECTORY: ${{ inputs.source_directory }}
+      run: |
+        set -euo pipefail
+
+        if [[ -n "${TCL_MODULE_FILE}" && -n "${SOURCE_DIRECTORY}" ]]; then
+          echo "::error::Set only one of tcl_module_file and source_directory"
+          exit 1
+        fi
+        if [[ -z "${TCL_MODULE_FILE}" && -z "${SOURCE_DIRECTORY}" ]]; then
+          echo "::error::One of tcl_module_file or source_directory is required"
+          exit 1
+        fi
+
+        if [[ -n "${TCL_MODULE_FILE}" ]]; then
+          STAGING_DIRECTORY="$(mktemp -d)"
+          trap 'rm -rf -- "${STAGING_DIRECTORY}"' EXIT
+          mkdir -p "${STAGING_DIRECTORY}/lib"
+          echo "${VERSION}" > "${STAGING_DIRECTORY}/lib/VERSION"
+          cp "${TCL_MODULE_FILE}" "${STAGING_DIRECTORY}/lib/$(basename "${TCL_MODULE_FILE}")"
+          ARCHIVE_DIRECTORY="${STAGING_DIRECTORY}"
+        else
+          echo "${VERSION}" > "${SOURCE_DIRECTORY}/VERSION"
+          ARCHIVE_DIRECTORY="${SOURCE_DIRECTORY}"
+        fi
+
+        ARCHIVE_PATH="$(realpath -m "${ARCHIVE_FILE}")"
+
+        tar \
+          --anchored \
+          --no-wildcards-match-slash \
+          --create \
+          --gzip \
+          --verbose \
+          --directory="${ARCHIVE_DIRECTORY}" \
+          --file="${ARCHIVE_PATH}" \
+          .
