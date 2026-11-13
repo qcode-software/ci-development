@@ -1,0 +1,138 @@
+name: "Release (Tcl module)"
+
+# Concatenates a repository's .tcl files into a single versioned Tcl module,
+# attaches the module archive and a .deb containing it to a GitHub release,
+# and uploads the package to the estate's apt server.
+
+on:
+  workflow_call:
+    inputs:
+      estate:
+        description: "Apt estate: tlc, mla or qcode"
+        required: true
+        type: string
+      module_name:
+        description: "Tcl package name, for example tlc_lib"
+        required: true
+        type: string
+      depends:
+        description: "Debian Depends field, comma separated"
+        required: true
+        type: string
+      tcl_source_directory:
+        description: "Directory searched for .tcl files"
+        required: false
+        type: string
+        default: "tcl"
+      maintainer:
+        description: "Debian Maintainer field"
+        required: false
+        type: string
+        default: "hackers@qcode.co.uk"
+      description:
+        description: "Debian package description. Defaults to '<repository> debian package.'"
+        required: false
+        type: string
+        default: ""
+      distribution:
+        description: "Apt distribution to include the package in"
+        required: false
+        type: string
+        default: "bookworm"
+      deploy_notes:
+        description: "Render the deploy template into the release notes"
+        required: false
+        type: boolean
+        default: false
+      deploy_file:
+        description: "Deploy template, rendered above the generated changelog"
+        required: false
+        type: string
+        default: ".github/deploy.md"
+    secrets:
+      DEB_PRIVATE_KEY:
+        description: "SSH key for the qcode estate"
+        required: false
+      MLA_DEB_PRIVATE_KEY:
+        description: "SSH key for the mla estate"
+        required: false
+      TS_OAUTH_CLIENT_ID:
+        description: "Tailscale OAuth client ID, tlc estate"
+        required: false
+      TS_AUDIENCE:
+        description: "Tailscale audience, tlc estate"
+        required: false
+
+jobs:
+  release:
+    name: "release"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # checkout and release creation
+      id-token: write # Tailscale workload identity, tlc estate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate next version
+        id: version
+        uses: qcode-software/ci-development/.github/actions/version-increment@v3.1.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Render deploy notes
+        if: inputs.deploy_notes
+        uses: qcode-software/ci-development/.github/actions/deploy-notes@v3.1.0
+        with:
+          version: ${{ steps.version.outputs.version }}
+          notes_file: ${{ runner.temp }}/notes.md
+          deploy_file: ${{ inputs.deploy_file }}
+
+      - name: Create Tcl module
+        uses: qcode-software/ci-development/.github/actions/tcl-module-build@v3.1.0
+        with:
+          source_directory: ${{ inputs.tcl_source_directory }}
+          version: ${{ steps.version.outputs.version }}
+          package: ${{ inputs.module_name }}
+          tcl_module_file: ${{ runner.temp }}/${{ inputs.module_name }}-${{ steps.version.outputs.version }}.tm
+
+      - name: Create source archive
+        uses: qcode-software/ci-development/.github/actions/source-archive@v3.1.0
+        with:
+          version: ${{ steps.version.outputs.version }}
+          archive_file: ${{ runner.temp }}/${{ github.event.repository.name }}-${{ steps.version.outputs.version }}.tar.gz
+          tcl_module_file: ${{ runner.temp }}/${{ inputs.module_name }}-${{ steps.version.outputs.version }}.tm
+
+      - name: Create Debian package
+        id: deb
+        uses: qcode-software/ci-development/.github/actions/debian-package-from-module@v3.1.0
+        with:
+          version: ${{ steps.version.outputs.version }}
+          tcl_module_file: ${{ runner.temp }}/${{ inputs.module_name }}-${{ steps.version.outputs.version }}.tm
+          maintainer: ${{ inputs.maintainer }}
+          description: ${{ inputs.description || format('{0} debian package.', github.event.repository.name) }}
+          depends: ${{ inputs.depends }}
+
+      - name: Create release
+        uses: qcode-software/ci-development/.github/actions/github-release@v3.1.0
+        with:
+          version: ${{ steps.version.outputs.version }}
+          notes_file: ${{ inputs.deploy_notes && format('{0}/notes.md', runner.temp) || '' }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          assets: |
+            ${{ runner.temp }}/${{ github.event.repository.name }}-${{ steps.version.outputs.version }}.tar.gz
+            ${{ steps.deb.outputs.package_file }}
+
+      - name: Upload Debian package
+        uses: qcode-software/ci-development/.github/actions/apt-upload@v3.1.0
+        with:
+          debian_package_file: ${{ steps.deb.outputs.package_file }}
+          estate: ${{ inputs.estate }}
+          variables: ${{ toJSON(vars) }}
+          distribution: ${{ inputs.distribution }}
+          qcode_private_key: ${{ secrets.DEB_PRIVATE_KEY }}
+          mla_private_key: ${{ secrets.MLA_DEB_PRIVATE_KEY }}
+          tailscale_oauth_client_id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          tailscale_audience: ${{ secrets.TS_AUDIENCE }}

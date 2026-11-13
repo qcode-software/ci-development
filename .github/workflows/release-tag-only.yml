@@ -1,0 +1,51 @@
+name: "Release (tag only)"
+
+# Creates a GitHub release and nothing else. For repositories that are
+# deployed from the tag rather than from a package.
+
+on:
+  workflow_call:
+    inputs:
+      deploy_notes:
+        description: "Render the deploy template into the release notes"
+        required: false
+        type: boolean
+        default: false
+      deploy_file:
+        description: "Deploy template, rendered above the generated changelog"
+        required: false
+        type: string
+        default: ".github/deploy.md"
+
+jobs:
+  release:
+    name: "release"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # checkout and release creation
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate next version
+        id: version
+        uses: qcode-software/ci-development/.github/actions/version-increment@v3.1.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Render deploy notes
+        if: inputs.deploy_notes
+        uses: qcode-software/ci-development/.github/actions/deploy-notes@v3.1.0
+        with:
+          version: ${{ steps.version.outputs.version }}
+          notes_file: ${{ runner.temp }}/notes.md
+          deploy_file: ${{ inputs.deploy_file }}
+
+      - name: Create release
+        uses: qcode-software/ci-development/.github/actions/github-release@v3.1.0
+        with:
+          version: ${{ steps.version.outputs.version }}
+          notes_file: ${{ inputs.deploy_notes && format('{0}/notes.md', runner.temp) || '' }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
