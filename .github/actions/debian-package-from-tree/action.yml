@@ -1,0 +1,39 @@
+name: "Debian Package From Tree"
+description: "Build a .deb from a directory tree containing DEBIAN/control.template, substituting $VERSION"
+inputs:
+  version:
+    description: "Package version"
+    required: true
+  source_dir:
+    description: "Directory containing the package tree and DEBIAN/control.template"
+    required: false
+    default: "deb"
+  package_file:
+    description: "Output .deb filename. Defaults to <repository name>_<version>_all.deb"
+    required: false
+    default: ""
+outputs:
+  package_file:
+    description: "Filename of the built .deb"
+    value: ${{ steps.build.outputs.package_file }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: build
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        SOURCE_DIR: ${{ inputs.source_dir }}
+        PACKAGE_FILE: ${{ inputs.package_file }}
+        REPO_NAME: ${{ github.event.repository.name }}
+      run: |
+        set -euo pipefail
+
+        PACKAGE_FILE="${PACKAGE_FILE:-${REPO_NAME}_${VERSION}_all.deb}"
+
+        export VERSION
+        envsubst '$VERSION' < "${SOURCE_DIR}/DEBIAN/control.template" | tee "${SOURCE_DIR}/DEBIAN/control"
+        fakeroot dpkg-deb -Zxz --build "${SOURCE_DIR}" "${PACKAGE_FILE}"
+
+        echo "package_file=${PACKAGE_FILE}" >> "$GITHUB_OUTPUT"
