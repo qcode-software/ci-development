@@ -60,27 +60,10 @@ runs:
         tags: ${{ inputs.tailscale_tags }}
         ping: ${{ inputs.remote_host }}
 
-    - name: Configure SSH
-      shell: bash
-      env:
-        PRIVATE_KEY: ${{ inputs.private_key }}
-        REMOTE_HOST: ${{ inputs.remote_host }}
-      run: |
-        set -euo pipefail
-        mkdir -p "$HOME/.ssh"
-        chmod 700 "$HOME/.ssh"
-        ssh-keyscan "$REMOTE_HOST" >> "$HOME/.ssh/known_hosts"
-        if [ -n "$PRIVATE_KEY" ]; then
-          printf '%s\n' "$PRIVATE_KEY" > "$HOME/.ssh/github"
-          chmod 600 "$HOME/.ssh/github"
-          eval "$(ssh-agent -s)"
-          ssh-add "$HOME/.ssh/github"
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
-        fi
-
     - name: Upload debian package
       shell: bash
       env:
+        PRIVATE_KEY: ${{ inputs.private_key }}
         DEB_FILE: ${{ inputs.debian_package_file }}
         REMOTE_USER: ${{ inputs.remote_user }}
         REMOTE_HOST: ${{ inputs.remote_host }}
@@ -88,16 +71,20 @@ runs:
         DISTRIBUTION: ${{ inputs.distribution }}
       run: |
         set -euo pipefail
+        work_dir="$(mktemp -d)"
+        trap 'rm -rf "$work_dir"' EXIT
+        ssh-keyscan "$REMOTE_HOST" > "$work_dir/known_hosts"
+        ssh_opts=(-o "UserKnownHostsFile=$work_dir/known_hosts")
+        if [ -n "$PRIVATE_KEY" ]; then
+          printf '%s\n' "$PRIVATE_KEY" > "$work_dir/key"
+          chmod 600 "$work_dir/key"
+          ssh_opts+=(-i "$work_dir/key" -o IdentitiesOnly=yes)
+        fi
         deb_name="$(basename "$DEB_FILE")"
-        scp "$DEB_FILE" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/debs"
-        ssh "${REMOTE_USER}@${REMOTE_HOST}" \
+        scp "${ssh_opts[@]}" "$DEB_FILE" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/debs"
+        ssh "${ssh_opts[@]}" "${REMOTE_USER}@${REMOTE_HOST}" \
           reprepro \
           --basedir "$REMOTE_DIR" \
           includedeb \
           "$DISTRIBUTION" \
           "${REMOTE_DIR}/debs/${deb_name}"
-
-    - name: Clean up SSH key
-      if: always()
-      shell: bash
-      run: rm -f "$HOME/.ssh/github"
