@@ -12,7 +12,7 @@ inputs:
     required: false
     default: ""
   source_directory:
-    description: "Directory whose contents are archived. A VERSION file is written to its root. Mutually exclusive with tcl_module_file"
+    description: "Directory whose contents are archived, excluding its .git directory. A VERSION file is written to its root. Mutually exclusive with tcl_module_file"
     required: false
     default: ""
 
@@ -54,6 +54,7 @@ runs:
         tar \
           --anchored \
           --no-wildcards-match-slash \
+          --exclude=./.git \
           --create \
           --gzip \
           --verbose \
