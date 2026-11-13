@@ -1,0 +1,53 @@
+name: "Deploy Notes"
+description: "Append a repo's deploy instructions (from a markdown template, default .github/deploy.md) to a release notes file"
+inputs:
+  version:
+    description: "Version, substituted for {{version}} in the template"
+    required: true
+  previous_version:
+    description: "Previous version, substituted for {{previous_version}} in the template. Only needed if the template uses it"
+    required: false
+    default: ""
+  repo_name:
+    description: "Repository name, substituted for {{repo_name}} in the template"
+    required: false
+    default: ${{ github.event.repository.name }}
+  notes_file:
+    description: "Release notes file the rendered template is appended to"
+    required: true
+  deploy_file:
+    description: "Markdown template to render"
+    required: false
+    default: ".github/deploy.md"
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        PREVIOUS_VERSION: ${{ inputs.previous_version }}
+        REPO_NAME: ${{ inputs.repo_name }}
+        NOTES_FILE: ${{ inputs.notes_file }}
+        DEPLOY_FILE: ${{ inputs.deploy_file }}
+      run: |
+        set -euo pipefail
+
+        if [[ ! -f "${DEPLOY_FILE}" ]]; then
+          echo "::error::Deploy template ${DEPLOY_FILE} not found"
+          exit 1
+        fi
+
+        CONTENT="$(cat "${DEPLOY_FILE}")"
+
+        if [[ -z "${PREVIOUS_VERSION}" && "${CONTENT}" == *"{{previous_version}}"* ]]; then
+          echo "::error::${DEPLOY_FILE} uses {{previous_version}} but previous_version is empty"
+          exit 1
+        fi
+
+        CONTENT="${CONTENT//\{\{version\}\}/${VERSION}}"
+        CONTENT="${CONTENT//\{\{previous_version\}\}/${PREVIOUS_VERSION}}"
+        CONTENT="${CONTENT//\{\{repo_name\}\}/${REPO_NAME}}"
+
+        # Leading blank line keeps the template out of any unterminated preceding note
+        printf '\n\n%s\n' "${CONTENT}" >> "${NOTES_FILE}"
