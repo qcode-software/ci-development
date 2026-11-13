@@ -39,6 +39,7 @@ runs:
 
         if [[ -n "${TCL_MODULE_FILE}" ]]; then
           STAGING_DIRECTORY="$(mktemp -d)"
+          trap 'rm -rf -- "${STAGING_DIRECTORY}"' EXIT
           mkdir -p "${STAGING_DIRECTORY}/lib"
           echo "${VERSION}" > "${STAGING_DIRECTORY}/lib/VERSION"
           cp "${TCL_MODULE_FILE}" "${STAGING_DIRECTORY}/lib/$(basename "${TCL_MODULE_FILE}")"
