@@ -12,7 +12,7 @@ inputs:
     description: "Apt estate: tlc, mla or qcode"
     required: true
   variables:
-    description: "The caller's vars context as JSON, normally ${{ toJSON(vars) }}"
+    description: "The caller's vars context, serialised with toJSON"
     required: true
   distribution:
     description: "reprepro distribution to include the package in"
