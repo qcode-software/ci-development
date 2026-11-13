@@ -49,4 +49,5 @@ runs:
         CONTENT="${CONTENT//\{\{previous_version\}\}/${PREVIOUS_VERSION}}"
         CONTENT="${CONTENT//\{\{repo_name\}\}/${REPO_NAME}}"
 
-        printf '%s\n' "${CONTENT}" >> "${NOTES_FILE}"
+        # Leading blank line keeps the template out of any unterminated preceding note
+        printf '\n\n%s\n' "${CONTENT}" >> "${NOTES_FILE}"
