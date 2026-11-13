@@ -1,0 +1,45 @@
+name: "Tcl Module Build"
+description: "Concatenate the .tcl files in a directory into a single versioned Tcl module (.tm)"
+inputs:
+  source_directory:
+    description: "Directory searched recursively for .tcl files"
+    required: true
+  version:
+    description: "Module version"
+    required: true
+  package:
+    description: "Tcl package name"
+    required: true
+  tcl_module_file:
+    description: "Path of the .tm file to create"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      env:
+        SOURCE_DIRECTORY: ${{ inputs.source_directory }}
+        VERSION: ${{ inputs.version }}
+        PACKAGE: ${{ inputs.package }}
+        TCL_MODULE_FILE: ${{ inputs.tcl_module_file }}
+      run: |
+        set -euo pipefail
+
+        {
+          echo "package provide ${PACKAGE} ${VERSION}"
+          echo ""
+          echo "proc ${PACKAGE}_version {} { return ${VERSION} }"
+          echo ""
+        } > "${TCL_MODULE_FILE}"
+
+        # Sorted with the C locale so the module content is deterministic.
+        # Run as a checked assignment so a find failure stops the action.
+        TCL_FILES="$(find "${SOURCE_DIRECTORY}/" -type f -name "*.tcl" | LC_ALL=C sort)"
+
+        while IFS= read -r tcl_file; do
+          [ -z "${tcl_file}" ] && continue
+          echo "${tcl_file}"
+          cat "${tcl_file}" >> "${TCL_MODULE_FILE}"
+          echo "" >> "${TCL_MODULE_FILE}"
+        done <<< "${TCL_FILES}"
