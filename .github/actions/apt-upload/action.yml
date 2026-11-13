@@ -1,0 +1,103 @@
+name: "APT Upload"
+description: >-
+  Upload a .deb to a reprepro apt repository over SSH. Connects either with an
+  SSH private key or over Tailscale. No hostnames are baked in: pass host, dir
+  and user from organisation variables.
+inputs:
+  debian_package_file:
+    description: "Path to the .deb file to upload"
+    required: true
+  remote_user:
+    description: "SSH user on the apt server"
+    required: true
+  remote_host:
+    description: "SSH host of the apt server"
+    required: true
+  remote_dir:
+    description: "reprepro base directory on the apt server"
+    required: true
+  distribution:
+    description: "reprepro distribution to include the package in"
+    required: false
+    default: "bookworm"
+  private_key:
+    description: "SSH private key. Leave empty when using Tailscale"
+    required: false
+    default: ""
+  tailscale_oauth_client_id:
+    description: "Tailscale OAuth client ID. When set, Tailscale is used to reach the host"
+    required: false
+    default: ""
+  tailscale_audience:
+    description: "Tailscale workload identity audience"
+    required: false
+    default: ""
+  tailscale_tags:
+    description: "Tailscale tags to advertise"
+    required: false
+    default: "tag:github"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Validate auth inputs
+      shell: bash
+      env:
+        PRIVATE_KEY: ${{ inputs.private_key }}
+        TS_CLIENT_ID: ${{ inputs.tailscale_oauth_client_id }}
+      run: |
+        if [ -z "$PRIVATE_KEY" ] && [ -z "$TS_CLIENT_ID" ]; then
+          echo "::error::Provide either private_key or tailscale_oauth_client_id"
+          exit 1
+        fi
+
+    - name: Tailscale
+      if: inputs.tailscale_oauth_client_id != ''
+      uses: tailscale/github-action@v4
+      with:
+        oauth-client-id: ${{ inputs.tailscale_oauth_client_id }}
+        audience: ${{ inputs.tailscale_audience }}
+        tags: ${{ inputs.tailscale_tags }}
+        ping: ${{ inputs.remote_host }}
+
+    - name: Configure SSH
+      shell: bash
+      env:
+        PRIVATE_KEY: ${{ inputs.private_key }}
+        REMOTE_HOST: ${{ inputs.remote_host }}
+      run: |
+        set -euo pipefail
+        mkdir -p "$HOME/.ssh"
+        chmod 700 "$HOME/.ssh"
+        ssh-keyscan "$REMOTE_HOST" >> "$HOME/.ssh/known_hosts"
+        if [ -n "$PRIVATE_KEY" ]; then
+          printf '%s\n' "$PRIVATE_KEY" > "$HOME/.ssh/github"
+          chmod 600 "$HOME/.ssh/github"
+          eval "$(ssh-agent -s)"
+          ssh-add "$HOME/.ssh/github"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+        fi
+
+    - name: Upload debian package
+      shell: bash
+      env:
+        DEB_FILE: ${{ inputs.debian_package_file }}
+        REMOTE_USER: ${{ inputs.remote_user }}
+        REMOTE_HOST: ${{ inputs.remote_host }}
+        REMOTE_DIR: ${{ inputs.remote_dir }}
+        DISTRIBUTION: ${{ inputs.distribution }}
+      run: |
+        set -euo pipefail
+        deb_name="$(basename "$DEB_FILE")"
+        scp "$DEB_FILE" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/debs"
+        ssh "${REMOTE_USER}@${REMOTE_HOST}" \
+          reprepro \
+          --basedir "$REMOTE_DIR" \
+          includedeb \
+          "$DISTRIBUTION" \
+          "${REMOTE_DIR}/debs/${deb_name}"
+
+    - name: Clean up SSH key
+      if: always()
+      shell: bash
+      run: rm -f "$HOME/.ssh/github"
