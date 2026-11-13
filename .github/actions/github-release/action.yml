@@ -1,0 +1,60 @@
+name: "GitHub Release"
+description: "Create a GitHub release for a version using the gh CLI, optionally attaching assets"
+inputs:
+  version:
+    description: "Version to release, without the leading v (the tag is v<version>)"
+    required: true
+  title_format:
+    description: "Release title. The placeholder {version} is replaced with the version"
+    required: false
+    default: "Release v{version}"
+  notes_file:
+    description: "Path to a file containing release notes. If empty, notes are generated automatically"
+    required: false
+    default: ""
+  assets:
+    description: "Files to attach to the release, one path or glob per line"
+    required: false
+    default: ""
+  github_token:
+    description: "GitHub token for gh CLI (needs contents: write)"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+        VERSION: ${{ inputs.version }}
+        TITLE_FORMAT: ${{ inputs.title_format }}
+        NOTES_FILE: ${{ inputs.notes_file }}
+        ASSETS: ${{ inputs.assets }}
+      run: |
+        set -euo pipefail
+
+        TITLE="${TITLE_FORMAT//\{version\}/${VERSION}}"
+
+        args=(--title "${TITLE}")
+        if [ -n "${NOTES_FILE}" ]; then
+          args+=(--notes-file "${NOTES_FILE}")
+        else
+          args+=(--generate-notes)
+        fi
+
+        # One asset per line; blank lines are ignored. Globs are expanded by the shell.
+        files=()
+        while IFS= read -r line; do
+          line="${line#"${line%%[![:space:]]*}"}"
+          line="${line%"${line##*[![:space:]]}"}"
+          [ -z "${line}" ] && continue
+          # compgen -G expands globs without splitting on spaces
+          mapfile -t matches < <(compgen -G "${line}" || true)
+          if [ "${#matches[@]}" -eq 0 ]; then
+            echo "Asset '${line}' not found"
+            exit 1
+          fi
+          files+=("${matches[@]}")
+        done <<< "${ASSETS}"
+
+        gh release create "v${VERSION}" "${args[@]}" "${files[@]}"
