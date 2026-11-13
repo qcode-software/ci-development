@@ -72,9 +72,10 @@ jobs:
       id-token: write # Tailscale workload identity, tlc estate
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Calculate next version
         id: version

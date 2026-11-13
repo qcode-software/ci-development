@@ -25,9 +25,10 @@ jobs:
       contents: write # checkout and release creation
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Calculate next version
         id: version
